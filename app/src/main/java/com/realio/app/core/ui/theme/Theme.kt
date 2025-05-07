@@ -1,8 +1,6 @@
-package com.realio.app.ui.theme
+package com.realio.app.core.ui.theme
 
-import android.app.Activity
 import android.os.Build
-import android.provider.CalendarContract.Colors
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
