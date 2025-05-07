@@ -61,4 +61,6 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
     // Material Design
     implementation(libs.material)
+    // Fonts Dependencies
+    implementation("androidx.compose.ui:ui-text-google-fonts:1.7.8")
 }

@@ -6,11 +6,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.realio.app.ui.theme.RealioTheme
 import kotlinx.coroutines.CoroutineScope
@@ -32,9 +31,18 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             RealioTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
+                Scaffold(
+                    modifier = Modifier.fillMaxSize()
+                ) { innerPadding ->
+                   Text(
+                        text = "Hello, World!",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(innerPadding)
+                    )
+
+                    Text(
+                        text = "Hello, World!",
+                        style = MaterialTheme.typography.displayLarge,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -43,18 +51,3 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    RealioTheme {
-        Greeting("Android")
-    }
-}
