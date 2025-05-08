@@ -1,6 +1,7 @@
 package com.realio.app.feature.authentication.presentation.screen
 
 import ThemedImage
+import android.graphics.Color
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,6 +19,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +32,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -181,23 +185,57 @@ fun SignUpScreen(navController: NavController) {
             }
             Spacer(modifier = Modifier.height(16.dp))
             // Or continue with google
-            AppButton(
+            SocialAppButton(
+                icon = painterResource(id = R.drawable.google_white),
+                text = "Continue with Google",
                 onClick = { },
-                enabled = valid,
                 modifier = Modifier.fillMaxWidth()
-            ) {
-               Row {
-                   Image(
-                       painter = painterResource(id = R.drawable.google_white),
-                       contentDescription = "Google",
-                       modifier = Modifier.padding(8.dp)
-                   )
-                   Text(
-                       text = "Continue with Google",
-                       style = MaterialTheme.typography.titleMedium
-                   )
-               }
-            }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            SocialAppButton(
+                icon = painterResource(id = R.drawable.apple_white),
+                text = "Continue with Apple",
+                onClick = { },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            // Or continue with facebook
+            SocialAppButton(
+                icon = painterResource(id = R.drawable.facebook),
+                text = "Continue with Facebook",
+                onClick = { },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
+}
+
+
+@Composable
+fun SocialAppButton(
+    icon: Painter,
+    text: String,
+    onClick: () -> Unit,
+    color: ButtonColors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onBackground),
+    modifier: Modifier = Modifier.fillMaxWidth()
+) {
+    AppButton(
+        onClick = onClick,
+        modifier = modifier,
+        colors = color,
+        enabled = true
+    ) {
+        Row {
+            Image(
+                painter = icon,
+                contentDescription = text,
+                modifier = Modifier.padding(7.dp)
+            )
+            Text(
+                text = text,
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+    }
+
 }
