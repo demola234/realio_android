@@ -1,72 +1,89 @@
 package com.realio.app.feature.authentication.presentation.screen
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.realio.app.R
-import com.realio.app.core.common.Dimensions.PADDING_LARGE
-import com.realio.app.core.common.Dimensions.PADDING_SMALL
-import com.realio.app.feature.authentication.data.model.OnboardingData
-import com.realio.app.feature.authentication.presentation.components.PagerIndicatorComponent
+import androidx.navigation.NavController
+import com.realio.app.core.navigation.RealioScreenConsts
+import com.realio.app.core.ui.components.buttons.AppButton
+import com.realio.app.feature.authentication.data.model.onboardingDataList
+import com.realio.app.feature.authentication.presentation.components.OnboardingPage
+import kotlinx.coroutines.launch
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun OnboardingScreen(
-    modifier: Modifier = Modifier,
-    onboardingData: OnboardingData
+    navController: NavController,
 ) {
-    Scaffold { paddingValues ->
-        Column(
+    val pageState = rememberPagerState(initialPage = 0) {
+        onboardingDataList.size
+    }
+    val coroutineScope = rememberCoroutineScope()
+    val buttonState = remember {
+        derivedStateOf {
+            when(pageState.currentPage) {
+                0 -> listOf("", "Next")
+                1 -> listOf("", "Next")
+                2 -> listOf("Back", "Get Started")
+                else -> listOf("", "")
+            }
+        }
+    }
 
-            modifier = modifier.padding(paddingValues)
+    Scaffold(
+        bottomBar = {
+            AppButton(
+                modifier = Modifier
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
+                    .fillMaxWidth(),
+                content = {
+                    Text(
+                        text = buttonState.value[1],
+                        modifier = Modifier.padding(horizontal = 24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        )
+                },
+                shape = MaterialTheme.shapes,
+                onClick = {
+                    coroutineScope.launch {
+                        if (pageState.currentPage >= 0 && pageState.currentPage < 2) {
+                            pageState.animateScrollToPage(page = pageState.currentPage + 1)
+                        } else {
+                            // TODO: Navigate to the next screen
+                            navController.navigate(RealioScreenConsts.Login.name)
+                        }
+                    }
+                }
+            )
+        }
+
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier.padding(paddingValues)
         ) {
-            Image(
-                modifier = Modifier.padding(PADDING_LARGE),
-                alignment = Alignment.Center,
-                painter = painterResource(id = onboardingData.image),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
+            HorizontalPager(state = pageState) { index ->
+                OnboardingPage(
+                    index = pageState.currentPage,
+                    onboardingData =  onboardingDataList[index],
                 )
-            Spacer(modifier = Modifier.height(PADDING_LARGE))
-            PagerIndicatorComponent(
-                modifier = Modifier.padding(vertical = PADDING_LARGE),
-                pagesSize = 3,
-                selectedPage = 0,
-                selectedColor = MaterialTheme.colorScheme.onBackground,
-                unselectedColor = MaterialTheme.colorScheme.inverseOnSurface
-            )
-            Spacer(modifier = Modifier.height(PADDING_LARGE))
-            Text(
-                onboardingData.title,
-                modifier = Modifier.padding(horizontal = PADDING_LARGE),
-                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onBackground
-                )
-            Spacer(modifier = Modifier.height(PADDING_LARGE))
-            Text(
-                onboardingData.description,
-                modifier = Modifier.padding(horizontal = PADDING_LARGE),
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                color = MaterialTheme.colorScheme.onBackground
-            )
+            }
+
         }
     }
 }
-

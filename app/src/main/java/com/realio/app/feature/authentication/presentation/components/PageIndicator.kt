@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -25,6 +26,7 @@ fun PagerIndicatorComponent(
         repeat(times = pagesSize) { page ->
             Box(
                 modifier = Modifier
+                    .padding(horizontal = 4.dp)
                     .size(8.dp)
                     .clip(CircleShape)
                     .background(color = if (page == selectedPage) selectedColor else unselectedColor)

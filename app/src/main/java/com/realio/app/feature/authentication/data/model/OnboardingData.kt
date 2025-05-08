@@ -9,7 +9,7 @@ data class OnboardingData(
     @DrawableRes val image: Int
 )
 
-val onboardingData = listOf(
+val onboardingDataList = listOf(
     OnboardingData(
         title = "Discover beautiful \n" +
                 "Apartments all over \n" +
