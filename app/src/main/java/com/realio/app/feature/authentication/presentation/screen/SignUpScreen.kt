@@ -153,9 +153,10 @@ fun SignUpScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp))
             // Sign up button
             AppButton(
-
-                onClick = { },
-                enabled = valid,
+                onClick = {
+                    navController.navigate(RealioScreenConsts.Otp.name)
+                },
+                enabled = true,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(

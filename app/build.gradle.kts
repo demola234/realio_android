@@ -106,4 +106,8 @@ dependencies {
     //Paging 3
     implementation("androidx.paging:paging-runtime:3.1.1")
     implementation("androidx.paging:paging-compose:3.2.0-rc01")
+
+    //SMS Retriever
+    implementation ("com.google.android.gms:play-services-auth:21.3.0")
+    implementation ("com.google.android.gms:play-services-auth-api-phone:18.2.0")
 }

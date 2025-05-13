@@ -4,4 +4,5 @@ enum class RealioScreenConsts {
     Onboarding,
     Login,
     SignUp,
+    Otp,
 }

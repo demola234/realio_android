@@ -6,6 +6,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.realio.app.feature.authentication.presentation.screen.LoginScreen
 import com.realio.app.feature.authentication.presentation.screen.OnboardingScreen
+import com.realio.app.feature.authentication.presentation.screen.OtpVerificationScreen
 import com.realio.app.feature.authentication.presentation.screen.SignUpScreen
 
 @Composable
@@ -17,7 +18,7 @@ fun RealioAppNavigation() {
     ) {
         // Onboarding screen route
         composable(route = RealioScreenConsts.Onboarding.name) {
-            OnboardingScreen(navController = navController)
+            OtpVerificationScreen(navController = navController)
         }
         // Login screen route
         composable(route = RealioScreenConsts.Login.name) {
@@ -26,6 +27,10 @@ fun RealioAppNavigation() {
         // Register screen route
         composable(route = RealioScreenConsts.SignUp.name) {
             SignUpScreen(navController = navController)
+        }
+        // Otp screen route
+        composable(route = RealioScreenConsts.Otp.name) {
+            OtpVerificationScreen(navController = navController)
         }
     }
 }
