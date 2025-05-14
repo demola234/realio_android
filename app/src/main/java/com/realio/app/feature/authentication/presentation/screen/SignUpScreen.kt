@@ -121,7 +121,7 @@ fun SignUpScreen(navController: NavController) {
                 placeHolder = "Password",
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Next,
-                value = emailField,
+                value = passwordField,
                 onValueChange = {},
                 modifier = Modifier.fillMaxWidth()
             )
@@ -131,7 +131,7 @@ fun SignUpScreen(navController: NavController) {
                 placeHolder = "Confirm Password",
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Next,
-                value = emailField,
+                value = confirmPasswordField,
                 onValueChange = {},
                 modifier = Modifier.fillMaxWidth()
             )
@@ -154,9 +154,9 @@ fun SignUpScreen(navController: NavController) {
             // Sign up button
             AppButton(
                 onClick = {
-                    navController.navigate(RealioScreenConsts.Otp.name)
+                    navController.navigate(RealioScreenConsts.Otp.name + "/${emailField.value}")
                 },
-                enabled = true,
+                enabled = valid,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(

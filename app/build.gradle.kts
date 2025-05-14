@@ -110,4 +110,17 @@ dependencies {
     //SMS Retriever
     implementation ("com.google.android.gms:play-services-auth:21.3.0")
     implementation ("com.google.android.gms:play-services-auth-api-phone:18.2.0")
+
+    // Permission handling (optional but recommended)
+    implementation("com.google.accompanist:accompanist-permissions:0.32.0")
+
+    // Google Auth dependencies
+    implementation ("com.google.android.gms:play-services-auth:21.3.0")
+
+    // Optional: For handling coroutines
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+
+    // Optional: For ViewModel support
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
 }

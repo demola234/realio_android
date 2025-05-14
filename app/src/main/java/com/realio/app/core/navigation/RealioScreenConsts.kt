@@ -5,4 +5,7 @@ enum class RealioScreenConsts {
     Login,
     SignUp,
     Otp,
+    PersonalInfo,
+    Avatar,
+    SelectImage,
 }

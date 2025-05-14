@@ -1,16 +1,21 @@
 package com.realio.app.feature.authentication.presentation.screen
 
 import OtpInputField
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -22,47 +27,80 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.realio.app.core.navigation.RealioScreenConsts
+import com.realio.app.core.ui.components.buttons.AppButton
+import com.realio.app.core.ui.theme.NeutralThreeColorLight
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OtpVerificationScreen(navController: NavController) {
+fun OtpVerificationScreen(navController: NavController, email: String) {
     Scaffold(
-        containerColor = Color.Gray
+        topBar = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(0.dp)
+                    .background(MaterialTheme.colorScheme.primary)
+            )
+        },
     ) { paddingValues ->
-        Box(
+
+        Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+                .padding(paddingValues),
+
         ) {
+
             var otpValue by remember { mutableStateOf("") }
             var isError by remember { mutableStateOf(false) }
             var errorMessage by remember { mutableStateOf("") }
             var successMessage by remember { mutableStateOf("") }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = "Verification Code",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 16.dp)
+            IconButton(onClick = { navController.popBackStack() }) {
+                Icon(
+                    imageVector = Icons.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
+            }
 
-                Text(
-                    text = "Enter the 6-digit code sent to your phone",
-                    fontSize = 16.sp,
-                    modifier = Modifier.padding(bottom = 32.dp)
-                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Top
+                ) {
+                    Text(
+                        text = "Enter confirmation code",
+                        style = TextStyle(
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            textAlign = TextAlign.Center,
+                            letterSpacing = 0.08.sp,
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
 
+                    Text(
+                        text = "A 4-digit code was sent to\n${email}",
+                        style = TextStyle(
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = NeutralThreeColorLight,
+                            textAlign = TextAlign.Center,
+                            lineHeight = 18.sp
+                        )
+                    )
 
+                    Spacer(modifier = Modifier.height(24.dp))
                     OtpInputField(
                         otpLength = 6,
                         isError = isError,
@@ -85,33 +123,48 @@ fun OtpVerificationScreen(navController: NavController) {
                     )
 
 
-                if (successMessage.isNotEmpty()) {
-                    Text(
-                        text = successMessage,
-                        color = Color(0xFF4CAF50), // Green
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
+                    if (successMessage.isNotEmpty()) {
+                        Text(
+                            text = successMessage,
+                            color = Color(0xFF4CAF50), // Green
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(
+                        onClick = {
+                            // TODO: Trigger resend logic here
+                            isError = false
+                            errorMessage = ""
+                            successMessage = ""
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Transparent,
+                            contentColor = MaterialTheme.colorScheme.primary
+                        ),
+                        modifier = Modifier.padding(top = 8.dp)
+                    ) {
+                        Text("Resend Code")
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    AppButton(
+                        onClick = {
+                            navController.navigate(RealioScreenConsts.PersonalInfo.name)
+                        },
+                        enabled = true,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Verify OTP",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = {
-                        // TODO: Trigger resend logic here
-                        isError = false
-                        errorMessage = ""
-                        successMessage = ""
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent,
-                        contentColor = MaterialTheme.colorScheme.primary
-                    ),
-                    modifier = Modifier.padding(top = 8.dp)
-                ) {
-                    Text("Resend Code")
-                }
-            }
         }
     }
 }

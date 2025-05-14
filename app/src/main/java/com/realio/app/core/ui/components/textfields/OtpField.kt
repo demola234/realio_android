@@ -80,12 +80,12 @@ fun OtpInputField(
     cellSpacing: Int = 8,
     cellBorderWidth: Int = 1,
     cellCornerRadius: Int = 8,
-    cellBackgroundColor: Color = Color.White,
-    cellBorderColor: Color = Color.Gray,
-    cellActiveColor: Color = Color.Blue,
+    cellBackgroundColor: Color = MaterialTheme.colorScheme.background,
+    cellBorderColor: Color = MaterialTheme.colorScheme.primary,
+    cellActiveColor: Color = MaterialTheme.colorScheme.onSurface,
     cellErrorColor: Color = Color.Red,
     cellSuccessColor: Color = Color.Green,
-    textColor: Color = Color.Black,
+    textColor: Color = MaterialTheme.colorScheme.onSurface,
     fontSize: Int = 20,
     keyboardType: KeyboardType = KeyboardType.Number,
     enableSmsAutofill: Boolean = true,
@@ -99,9 +99,6 @@ fun OtpInputField(
     val interactionSource = remember { MutableInteractionSource() }
     var successJob by remember { mutableStateOf<Job?>(null) }
     val isFocusedOnce = remember { mutableStateOf(false) }
-
-    // Track composition state to ensure parent components are placed
-    val isCompositionReady = remember { mutableStateOf(false) }
 
     // State for shake animation
     val shakeOffset = remember { Animatable(0f) }
@@ -163,18 +160,29 @@ fun OtpInputField(
         }
     }
 
-    // Ensure composition is ready before attempting focus
+    // FIXED: Use a more reliable way to request focus
+    // that works with the Compose lifecycle properly
     LaunchedEffect(Unit) {
-        delay(100)
-        isCompositionReady.value = true
-    }
+        // Wait for the composition to be fully laid out
+        delay(300)
 
-    // Only request focus when composition is ready
-    LaunchedEffect(isCompositionReady.value) {
-        if (isCompositionReady.value && !isFocusedOnce.value) {
-            delay(150) // Additional delay to ensure parent layout is stable
-            focusRequester.requestFocus()
-            isFocusedOnce.value = true
+        try {
+            if (!isFocusedOnce.value) {
+                focusRequester.requestFocus()
+                isFocusedOnce.value = true
+            }
+        } catch (e: Exception) {
+            // Handle potential exceptions from focus request
+            // This provides resilience against timing issues
+            coroutineScope.launch {
+                delay(500)
+                try {
+                    focusRequester.requestFocus()
+                    isFocusedOnce.value = true
+                } catch (e: Exception) {
+                    // Silent fallback - user can tap to focus manually
+                }
+            }
         }
     }
 
@@ -254,9 +262,10 @@ fun OtpInputField(
             )
         }
 
-        // Hidden input field - Wrap with Box to ensure proper layout
+        // FIXED: Improved BasicTextField wrapper with more stable behavior
         Box(
             modifier = Modifier
+                .padding(0.dp)
                 .size(1.dp)
                 .background(Color.Transparent)
         ) {
@@ -274,13 +283,14 @@ fun OtpInputField(
                         otpText.value = filtered
                     }
                 },
+                // FIXED: Improved focus handling with safer modifiers ordering
                 modifier = Modifier
-                    .size(0.dp)
-                    .focusRequester(focusRequester)
-                    .semantics {
+                    .clearAndSetSemantics {
                         contentDescription = "OTP input field, enter $otpLength digit code"
                         testTag = "otp_input_field"
-                    },
+                    }
+                    .size(1.dp)
+                    .focusRequester(focusRequester),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = keyboardType,
                     imeAction = ImeAction.Done
@@ -289,10 +299,12 @@ fun OtpInputField(
                     onDone = { keyboardController?.hide() }
                 ),
                 textStyle = TextStyle(color = Color.Transparent),
+                // Ensuring text is not scrollable to avoid layout issues
+                singleLine = true
             )
         }
 
-        // Add a small spacer to ensure proper layout
+        // Add a spacer to ensure proper layout
         Spacer(modifier = Modifier.height(4.dp))
 
         // OTP UI Cells with improved accessibility
@@ -302,9 +314,13 @@ fun OtpInputField(
                 .padding(vertical = 8.dp)
                 .pointerInput(Unit) {
                     detectTapGestures {
-                        if (isCompositionReady.value) {
+                        // FIXED: More stable focus handling on tap
+                        try {
                             focusRequester.requestFocus()
                             keyboardController?.show()
+                        } catch (e: Exception) {
+                            // Fallback silently if focus fails
+                            // The user can still continue typing
                         }
                     }
                 }
@@ -388,6 +404,20 @@ fun OtpInputField(
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
+        }
+
+        // Display error message if provided
+        if (isError && errorMessage.isNotEmpty()) {
+            Text(
+                text = errorMessage,
+                color = cellErrorColor,
+                fontSize = 12.sp,
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .semantics {
+                        contentDescription = "Error: $errorMessage"
+                    }
+            )
         }
     }
 }
