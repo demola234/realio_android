@@ -30,16 +30,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.realio.app.core.navigation.RealioScreenConsts
 import com.realio.app.core.ui.components.buttons.AppButton
 import com.realio.app.core.ui.theme.NeutralThreeColorLight
+import com.realio.app.core.ui.theme.RealioTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OtpVerificationScreen(navController: NavController, email: String) {
+fun OtpVerificationScreen(navController: NavController? = null, email: String) {
     Scaffold(
         topBar = {
             Box(
@@ -62,7 +64,7 @@ fun OtpVerificationScreen(navController: NavController, email: String) {
             var errorMessage by remember { mutableStateOf("") }
             var successMessage by remember { mutableStateOf("") }
 
-            IconButton(onClick = { navController.popBackStack() }) {
+            IconButton(onClick = { navController?.popBackStack() }) {
                 Icon(
                     imageVector = Icons.Filled.ArrowBack,
                     contentDescription = "Back",
@@ -153,7 +155,7 @@ fun OtpVerificationScreen(navController: NavController, email: String) {
                     Spacer(modifier = Modifier.height(16.dp))
                     AppButton(
                         onClick = {
-                            navController.navigate(RealioScreenConsts.PersonalInfo.name)
+                            navController?.navigate(RealioScreenConsts.PersonalInfo.name)
                         },
                         enabled = true,
                         modifier = Modifier.fillMaxWidth()
@@ -166,5 +168,17 @@ fun OtpVerificationScreen(navController: NavController, email: String) {
                 }
 
         }
+    }
+}
+
+
+@Preview(showBackground = true)
+@Composable
+fun OtpVerificationScreenPreview() {
+    RealioTheme {
+        OtpVerificationScreen(
+            navController = null,
+            email = "example@example.com"
+        )
     }
 }

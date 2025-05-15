@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.realio.app.core.common.Dimensions.PADDING_LARGE
+import com.realio.app.core.ui.theme.RealioTheme
 import com.realio.app.feature.authentication.data.model.onboardingDataList
 
 
@@ -68,8 +69,10 @@ fun OnboardingPage(
 @Preview
 @Composable
 fun OnboardingPagePreview() {
-    OnboardingPage(
-        index = 0,
-        onboardingData = onboardingDataList[0]
-    )
+    RealioTheme {
+        OnboardingPage(
+            index = 0,
+            onboardingData = onboardingDataList[0]
+        )
+    }
 }

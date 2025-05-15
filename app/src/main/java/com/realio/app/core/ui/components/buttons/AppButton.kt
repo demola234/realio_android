@@ -1,10 +1,9 @@
 package com.realio.app.core.ui.components.buttons
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
@@ -19,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -30,8 +30,10 @@ fun AppButton(
     shape: Shapes = MaterialTheme.shapes,
     contentPadding: PaddingValues = PaddingValues(vertical = 16.dp),
     enabled: Boolean = true,
+    borderEnabled: Boolean? = true,
+    borderColor: Color? = Color.Black,
     colors: ButtonColors = ButtonDefaults.buttonColors(),
-    content: @Composable () -> Unit
+    content: @Composable (() -> Unit)
 ) {
     var isPressed by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -59,6 +61,10 @@ fun AppButton(
         },
         modifier = modifier
             .scale(scale)
+            .border(
+                width = if (borderEnabled == true) 1.dp else 0.dp,
+                color = borderColor ?: MaterialTheme.colorScheme.primary
+            )
             .alpha(alpha),
         shape = shape.medium,
         contentPadding = contentPadding,

@@ -20,9 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -45,37 +43,42 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.realio.app.R
 import com.realio.app.core.common.Dimensions.PADDING_LARGE
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.sp
 import com.realio.app.core.navigation.RealioScreenConsts
 import com.realio.app.core.ui.components.buttons.AppButton
 import com.realio.app.core.ui.components.textfields.AppTextField
 import com.realio.app.core.ui.theme.PrimaryColorLight
+import com.realio.app.core.ui.theme.RealioTheme
 import com.realio.app.feature.authentication.presentation.viewModel.AuthState
-import com.realio.app.feature.authentication.presentation.viewModel.GoogleViewModel
+import com.realio.app.feature.authentication.presentation.viewModel.IGoogleViewModel
+import com.realio.app.feature.authentication.presentation.viewModel.PreviewGoogleViewModel
 import com.realio.app.feature.authentication.presentation.viewModel.UserData
 
 @Composable
 fun LoginScreen(
-    navController: NavController,
-    webClientId: String,
-    onSignInSuccess: (UserData) -> Unit,
-    authViewModel: GoogleViewModel = viewModel(),
+    navController: NavController? = null,
+    webClientId: String? = null,
+    onSignInSuccess: (UserData) -> Unit?,
+    authViewModel: IGoogleViewModel
     ) {
     val emailField = rememberSaveable { mutableStateOf("") }
     val passwordField = rememberSaveable { mutableStateOf("") }
     val valid = remember(emailField.value, passwordField.value) {
         emailField.value.trim().isNotEmpty() && passwordField.value.trim().isNotEmpty()
     }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     val scrollState = rememberScrollState()
 
@@ -84,7 +87,7 @@ fun LoginScreen(
 
     // Initialize Google Sign-In when the composable is first created
     LaunchedEffect(Unit) {
-        authViewModel.initGoogleSignIn(context, webClientId)
+        authViewModel.initGoogleSignIn(context, webClientId.toString())
     }
 
     // Set up the activity result launcher for Google Sign-In
@@ -167,6 +170,7 @@ fun LoginScreen(
                 .fillMaxSize(),
         ) {
 
+            Spacer(modifier = Modifier.height(24.dp))
             // Logo
             ThemedImage(
                 darkImage = R.drawable.dark_logo,
@@ -189,8 +193,12 @@ fun LoginScreen(
 
             // Welcome text
             Text(
-                text = "Welcome!",
-                style = MaterialTheme.typography.displaySmall,
+                text = "Welcome to Realio!",
+                style = MaterialTheme.typography.displaySmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontSize = 24.sp
+                ),
                 modifier = Modifier.padding(vertical = 15.dp)
             )
 
@@ -229,7 +237,8 @@ fun LoginScreen(
                 Text(
                     text = "Forgot password?",
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+                        fontWeight = FontWeight.Bold
                     ),
                     modifier = Modifier
                         .padding(vertical = 16.dp)
@@ -239,7 +248,10 @@ fun LoginScreen(
 
             // Login button
             AppButton (
-                onClick = {},
+                onClick = {
+                    keyboardController?.hide()
+
+                },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
                 ),
@@ -255,7 +267,9 @@ fun LoginScreen(
 
             // Sign up option
             Row(
-                modifier = Modifier.padding(vertical = 24.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 24.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
@@ -266,7 +280,7 @@ fun LoginScreen(
                 Text(
                     text = "Register now",
                     modifier = Modifier.clickable(){
-                        navController.navigate(RealioScreenConsts.SignUp.name)
+                        navController?.navigate(RealioScreenConsts.SignUp.name)
                     },
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = MaterialTheme.colorScheme.primary
@@ -285,14 +299,18 @@ fun LoginScreen(
             Text(
                 text = "Or continue with",
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(vertical = 24.dp)
+                modifier = Modifier.padding(vertical = 24.dp, horizontal = 30.dp)
                     .align(alignment = Alignment.CenterHorizontally)
+
             )
 
             // Social login options
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
+
             ) {
                 // Google
                 // In your when (authState) block in the SocialLoginButton section:
@@ -398,7 +416,7 @@ private fun SocialLoginButton(
 ) {
     Box(
         modifier = Modifier
-            .size(48.dp)
+            .size(40.dp)
             .clickable { onClick() }
             .clip(CircleShape)
             .background(color)
@@ -412,7 +430,21 @@ private fun SocialLoginButton(
         Image(
             painter = painterResource(id = iconResId),
             contentDescription = contentDescription,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(12.dp)
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun LoginScreenPreview() {
+    val fakeViewModel = PreviewGoogleViewModel()
+    RealioTheme {
+        LoginScreen(
+            navController = null,
+            webClientId = "dummy-web-client-id",
+            onSignInSuccess = {},
+            authViewModel = fakeViewModel
         )
     }
 }

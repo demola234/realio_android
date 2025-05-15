@@ -16,13 +16,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.realio.app.core.navigation.RealioScreenConsts
+import com.realio.app.core.ui.theme.RealioTheme
 
 @Composable
-fun PersonalizationExperienceScreen(navController: NavController) {
+fun PersonalizationExperienceScreen(navController: NavController? = null) {
     val propertyTypes = listOf("Bungalo", "Studio", "Multi-bedroom", "Loft", "Duplex", "Penthouse", "Garden", "Luxury")
 
     val selectedProperties = remember {
@@ -68,7 +70,7 @@ fun PersonalizationExperienceScreen(navController: NavController) {
                         modifier = Modifier
                             .align(Alignment.CenterStart)
                             .clickable {
-                                navController.popBackStack()
+                                navController?.popBackStack()
                             }
                     )
                 }
@@ -143,7 +145,7 @@ fun PersonalizationExperienceScreen(navController: NavController) {
 
                 // Next button
                 Button(
-                    onClick = { navController.navigate(RealioScreenConsts.Avatar.name) },
+                    onClick = { navController?.navigate(RealioScreenConsts.Avatar.name) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
@@ -160,5 +162,15 @@ fun PersonalizationExperienceScreen(navController: NavController) {
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PersonalizationExperienceScreenPreview() {
+    RealioTheme {
+        PersonalizationExperienceScreen(
+            navController = null,
+        )
     }
 }

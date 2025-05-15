@@ -67,6 +67,7 @@ import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.realio.app.R
 import com.realio.app.core.ui.components.buttons.AppButton
+import com.realio.app.core.ui.theme.RealioTheme
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -74,7 +75,7 @@ import java.util.Locale
 
 
 @Composable
-fun AvatarSelectionScreen(navController: NavController) {
+fun AvatarSelectionScreen(navController: NavController? = null) {
     // State for the selected image
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
 
@@ -212,7 +213,7 @@ fun AvatarSelectionScreen(navController: NavController) {
                     tint = Color.White,
                     modifier = Modifier
                         .align(Alignment.CenterStart)
-                        .clickable { navController.popBackStack() }
+                        .clickable { navController?.popBackStack() }
                 )
             }
 
@@ -399,8 +400,13 @@ private fun createImageFile(context: Context): File {
 }
 
 
-@Preview
-@Composable
-fun AvatarSelectionScreen() {
 
+@Preview(showBackground = true)
+@Composable
+fun AvatarSelectionScreenPreview() {
+    RealioTheme {
+        AvatarSelectionScreen(
+            navController = null,
+        )
+    }
 }

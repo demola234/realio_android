@@ -19,27 +19,37 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
-class GoogleViewModel : ViewModel() {
+interface IGoogleViewModel {
+    val authState: StateFlow<AuthState>
+    fun beginSignIn(context: Context)
+    fun handleSignInResult(data: Intent?)
+    fun signOut()
+    fun initGoogleSignIn(context: Context, clientId: String)
+    fun updateAuthState(newState: AuthState)
+}
+
+
+class GoogleViewModel : ViewModel(), IGoogleViewModel {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
-    val authState: StateFlow<AuthState> = _authState.asStateFlow()
+    override val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
     // For Identity Services
     private var oneTapClient: SignInClient? = null
     private var webClientId: String = ""
 
-    fun initGoogleSignIn(context: Context, clientId: String) {
+    override fun initGoogleSignIn(context: Context, clientId: String) {
         webClientId = clientId
         // Initialize Identity Services client
         oneTapClient = Identity.getSignInClient(context)
     }
 
-    fun updateAuthState(newState: AuthState) {
+    override fun updateAuthState(newState: AuthState) {
         _authState.value = newState
     }
 
 
-    fun beginSignIn(context: Context) {
+    override fun beginSignIn(context: Context) {
         _authState.value = AuthState.Loading
 
         Log.d("GoogleSignIn", "Starting sign-in process with client ID: $webClientId")
@@ -176,7 +186,7 @@ class GoogleViewModel : ViewModel() {
     }
 
     // Handle the result from One Tap sign-in
-    fun handleSignInResult(data: Intent?) {
+    override fun handleSignInResult(data: Intent?) {
         if (data == null) {
             Log.e("GoogleSignIn", "Sign-in intent was null")
             _authState.value = AuthState.Error("Sign-in intent was null")
@@ -225,7 +235,7 @@ class GoogleViewModel : ViewModel() {
         }
     }
 
-    fun signOut() {
+    override fun signOut() {
         viewModelScope.launch {
             try {
                 oneTapClient?.signOut()?.await()
@@ -256,3 +266,4 @@ data class UserData(
     val email: String,
     val photoUrl: String? = null
 )
+
