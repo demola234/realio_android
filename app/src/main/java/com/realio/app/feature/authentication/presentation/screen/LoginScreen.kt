@@ -78,6 +78,7 @@ fun LoginScreen(
     val valid = remember(emailField.value, passwordField.value) {
         emailField.value.trim().isNotEmpty() && passwordField.value.trim().isNotEmpty()
     }
+    val showPassword = rememberSaveable { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
 
     val scrollState = rememberScrollState()
@@ -212,23 +213,14 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Password field with visibility toggle
-            AppTextField(
+            PasswordTextField(
                 value = passwordField,
                 placeHolder = "Password",
-                keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Done,
                 onValueChange = {},
-                trailingIcon = {
-                    IconButton(onClick = {}) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.logo_dark_wrapper),
-                            contentDescription = "Toggle password visibility"
-                        )
-                    }
-                },
                 modifier = Modifier.fillMaxWidth()
             )
 

@@ -26,6 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -53,6 +54,7 @@ import com.realio.app.core.navigation.RealioScreenConsts
 import com.realio.app.core.ui.components.buttons.AppButton
 import com.realio.app.core.ui.components.textfields.AppTextField
 import com.realio.app.core.ui.theme.RealioTheme
+import com.realio.app.core.utils.ValidationUtils
 
 @Composable
 fun SignUpScreen(navController: NavController? = null) {
@@ -63,6 +65,53 @@ fun SignUpScreen(navController: NavController? = null) {
     val rememberMe = rememberSaveable { mutableStateOf(false) }
     val valid = remember(emailField.value, passwordField.value) {
         emailField.value.trim().isNotEmpty() && passwordField.value.trim().isNotEmpty()
+    }
+
+    val emailError = remember {
+        derivedStateOf {
+            if (emailField.value.isEmpty()) {
+                ""
+            } else if (!ValidationUtils.isValidEmail(emailField.value)) {
+                "Please enter a valid email address"
+            } else {
+                ""
+            }
+        }
+    }
+
+    val passwordError = remember {
+        derivedStateOf {
+            if (passwordField.value.isEmpty()) {
+                ""
+            } else if (ValidationUtils.getPasswordStrength(passwordField.value) == com.realio.app.core.utils.PasswordStrength.WEAK) {
+                ValidationUtils.getPasswordRequirementsMessage()
+            } else {
+                ""
+            }
+        }
+    }
+
+    val confirmPasswordError = remember {
+        derivedStateOf {
+            if (confirmPasswordField.value.isEmpty()) {
+                ""
+            } else if (!ValidationUtils.doPasswordsMatch(passwordField.value, confirmPasswordField.value)) {
+                "Passwords do not match"
+            } else {
+                ""
+            }
+        }
+    }
+
+    // Form validity
+    val isValidForm = remember {
+        derivedStateOf {
+            nameField.value.isNotEmpty() &&
+                    ValidationUtils.isValidEmail(emailField.value) &&
+                    ValidationUtils.getPasswordStrength(passwordField.value) != com.realio.app.core.utils.PasswordStrength.WEAK &&
+                    ValidationUtils.doPasswordsMatch(passwordField.value, confirmPasswordField.value) &&
+                    rememberMe.value
+        }
     }
 
     val scrollState = rememberScrollState()
@@ -126,35 +175,43 @@ fun SignUpScreen(navController: NavController? = null) {
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             AppTextField(
                 placeHolder = "Email Address",
                 keyboardType = KeyboardType.Text,
                 imeAction = ImeAction.Next,
                 value = emailField,
                 onValueChange = {},
+                isError = emailError.value.isNotEmpty(),
+                errorMessage = emailError.value,
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(14.dp))
-            AppTextField(
-                placeHolder = "Password",
-                keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Next,
+            Spacer(modifier = Modifier.height(10.dp))
+            PasswordTextField(
                 value = passwordField,
+                placeHolder = "Password",
+                isError = passwordError.value.isNotEmpty(),
+                errorMessage = passwordError.value,
+                showStrengthIndicator = true,
+                imeAction = ImeAction.Next,
                 onValueChange = {},
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(14.dp))
-            AppTextField(
-                placeHolder = "Confirm Password",
-                keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Next,
+            Spacer(modifier = Modifier.height(10.dp))
+            PasswordTextField(
                 value = confirmPasswordField,
+                placeHolder = "Confirm Password",
+                imeAction = ImeAction.Done,
                 onValueChange = {},
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                isError = confirmPasswordError.value.isNotEmpty(),
+                errorMessage = confirmPasswordError.value,
+                showStrengthIndicator = false,
+
             )
+
             Spacer(modifier = Modifier.height(14.dp))
 
             // I've read and agree with the Terms and Conditions and the Privacy Policy.
@@ -231,12 +288,12 @@ fun SignUpScreen(navController: NavController? = null) {
             Spacer(modifier = Modifier.height(16.dp))
             // Sign up button
             AppButton(
-                
+                enabled = isValidForm.value,
                 onClick = {
                     navController?.navigate(RealioScreenConsts.Otp.name + "/${emailField.value}")
                 },
-                enabled = valid,
-
+                borderEnabled = false,
+                borderColor = Color.Transparent,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
@@ -275,8 +332,11 @@ fun SignUpScreen(navController: NavController? = null) {
                 onClick = { },
                 color =  ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onPrimary),
                 borderEnabled = true,
-                borderColor = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.fillMaxWidth()
+                borderColor = MaterialTheme.colorScheme.primaryContainer,
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.onBackground
+                )
             )
             Spacer(modifier = Modifier.height(16.dp))
             SocialAppButton(
@@ -295,38 +355,37 @@ fun SignUpScreen(navController: NavController? = null) {
 fun SocialAppButton(
     icon: Painter,
     text: String,
-    borderColor: Color? = null,
-    borderEnabled: Boolean? = false,
+    borderColor: Color = Color.Black,
+    borderEnabled: Boolean = false,
     onClick: () -> Unit,
     color: ButtonColors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onBackground),
-    modifier: Modifier = Modifier.fillMaxWidth()
+    modifier: Modifier = Modifier.fillMaxWidth(),
+    textStyle: TextStyle? = null,
 ) {
     AppButton(
         onClick = onClick,
         modifier = modifier,
         colors = color,
         borderColor = borderColor,
-        borderEnabled = borderEnabled,
+        borderEnabled = borderEnabled == true,
         enabled = true
     ) {
         Row {
             Image(
                 painter = icon,
                 contentDescription = text,
-                modifier = Modifier.padding(3.dp)
+                modifier = Modifier.padding(3.dp),
             )
             Spacer(modifier = Modifier.width(2.dp))
             Text(
                 text = text,
-                style = MaterialTheme.typography.bodyMedium.copy(
-
-                )
+                style = textStyle ?: MaterialTheme.typography.bodyMedium,
             )
         }
     }
 }
 
-@Preview(showBackground = true)
+@Preview()
 @Composable
 fun SignUpScreenPreview() {
     RealioTheme {

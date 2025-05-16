@@ -59,7 +59,7 @@ fun OnboardingScreen(
                         color = MaterialTheme.colorScheme.onPrimary,
                         )
                 },
-                shape = MaterialTheme.shapes,
+                shape = MaterialTheme.shapes.medium,
                 onClick = {
                     coroutineScope.launch {
                         if (pageState.currentPage >= 0 && pageState.currentPage < 2) {

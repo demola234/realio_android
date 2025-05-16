@@ -8,7 +8,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Shapes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -27,11 +27,11 @@ import kotlinx.coroutines.launch
 fun AppButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    shape: Shapes = MaterialTheme.shapes,
+    shape: Shape = MaterialTheme.shapes.medium,
     contentPadding: PaddingValues = PaddingValues(vertical = 16.dp),
     enabled: Boolean = true,
-    borderEnabled: Boolean? = true,
-    borderColor: Color? = Color.Black,
+    borderEnabled: Boolean = false,
+    borderColor: Color = Color.Black,
     colors: ButtonColors = ButtonDefaults.buttonColors(),
     content: @Composable (() -> Unit)
 ) {
@@ -48,6 +48,21 @@ fun AppButton(
         label = "AlphaAnimation"
     )
 
+    val buttonModifier = if (borderEnabled) {
+        modifier
+            .scale(scale)
+            .alpha(alpha)
+            .border(
+                width = 1.dp,
+                color = borderColor,
+                shape = shape
+            )
+    } else {
+        modifier
+            .scale(scale)
+            .alpha(alpha)
+    }
+
     Button(
         onClick = {
             if (enabled) {
@@ -59,18 +74,12 @@ fun AppButton(
                 }
             }
         },
-        modifier = modifier
-            .scale(scale)
-            .border(
-                width = if (borderEnabled == true) 1.dp else 0.dp,
-                color = borderColor ?: MaterialTheme.colorScheme.primary
-            )
-            .alpha(alpha),
-        shape = shape.medium,
+        shape = shape,
         contentPadding = contentPadding,
         enabled = enabled,
         colors = colors,
         interactionSource = remember { MutableInteractionSource() },
+        modifier = buttonModifier,
     ) {
         content()
     }

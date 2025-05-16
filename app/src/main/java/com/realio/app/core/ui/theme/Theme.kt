@@ -19,6 +19,7 @@ private val DarkColorScheme = darkColorScheme(
     surface = BackgroundColorDark,
     onBackground = InvertedPrimaryColorDark,
     onSurface = InvertedSecondaryColorDark,
+    tertiary = InvertedSecondaryColorLight,
     onError = RedOneColorDark,
 )
 
@@ -30,6 +31,7 @@ private val LightColorScheme = lightColorScheme(
     surface = BackgroundColorLight,
     onBackground = InvertedPrimaryColorLight,
     onSurface = InvertedSecondaryColorLight,
+    tertiary = NeutralTwoColorLight,
     onError = RedOneColorDark,
 )
 
