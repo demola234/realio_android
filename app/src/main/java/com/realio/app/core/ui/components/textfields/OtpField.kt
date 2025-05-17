@@ -393,10 +393,8 @@ fun OtpInputField(
             }
         }
 
-        // Manual input option or permissions message
         if (enableSmsAutofill) {
             if (!hasSmsPermissions.value && requestPermissions) {
-                // Show message about missing permissions
                 Text(
                     text = "SMS auto-fill requires SMS permissions",
                     color = Color.Gray,
@@ -406,7 +404,6 @@ fun OtpInputField(
             }
         }
 
-        // Display error message if provided
         if (isError && errorMessage.isNotEmpty()) {
             Text(
                 text = errorMessage,
@@ -445,13 +442,11 @@ fun CursorAnimation(
     }
 }
 
-// SMS Retriever for auto-fill functionality
 @RequiresApi(Build.VERSION_CODES.O)
 fun startSmsRetriever(context: Context, onCodeReceived: (String) -> Unit) {
-    // First check if we have necessary permissions
     if (checkSelfPermission(context, Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED ||
         checkSelfPermission(context, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
-        return  // Exit if permissions not granted
+        return
     }
 
     val smsRetrieverClient = SmsRetriever.getClient(context)
@@ -467,9 +462,7 @@ fun startSmsRetriever(context: Context, onCodeReceived: (String) -> Unit) {
                     val status = extras?.get(SmsRetriever.EXTRA_STATUS)
 
                     if (status == SmsRetriever.SMS_RETRIEVED_ACTION) {
-                        // Get SMS message content
                         val message = extras.getString(SmsRetriever.EXTRA_SMS_MESSAGE)
-                        // Extract the OTP code from SMS message
                         message?.let {
                             val otpPattern = Regex("\\d{4,6}")
                             val matchResult = otpPattern.find(message)
@@ -481,7 +474,6 @@ fun startSmsRetriever(context: Context, onCodeReceived: (String) -> Unit) {
                     }
                 }
 
-                // Unregister the receiver after receiving SMS
                 context.unregisterReceiver(this)
             }
         }

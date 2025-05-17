@@ -10,7 +10,7 @@ interface AuthDataSource {
     suspend fun login(email: String, password: String): Result<AuthApiResponse>
     suspend fun register(name: String, email: String, password: String): Result<AuthApiResponse>
     suspend fun logout(token: String): Result<LogoutResponse>
-    suspend fun verifyOtp(email: String, otp: String): Result<AuthApiResponse>
+    suspend fun verifyOtp(email: String, otp: String): Result<OtpResponse>
     suspend fun resendOtp(email: String): Result<OtpResponse>
     suspend fun oauthLogin(provider: String, token: String): Result<AuthApiResponse>
     suspend fun oauthRegister(provider: String, token: String, email: String): Result<AuthApiResponse>

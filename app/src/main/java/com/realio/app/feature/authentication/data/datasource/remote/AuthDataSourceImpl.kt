@@ -62,7 +62,7 @@ class AuthDataSourceImpl(private val authApi: AuthApi) : AuthDataSource {
     override suspend fun verifyOtp(
         email: String,
         otp: String
-    ): Result<AuthApiResponse> {
+    ): Result<OtpResponse> {
         return try {
             val response = authApi.verifyOtp(VerifyRequest(email = email, otp = otp))
             if (response.isSuccessful) {

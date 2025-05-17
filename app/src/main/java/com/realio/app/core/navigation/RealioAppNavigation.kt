@@ -17,6 +17,8 @@ import com.realio.app.feature.authentication.presentation.screen.Personalization
 import com.realio.app.feature.authentication.presentation.screen.SignUpScreen
 import com.realio.app.feature.authentication.presentation.viewModel.GoogleViewModel
 import com.realio.app.feature.authentication.presentation.viewModel.LoginViewModel
+import com.realio.app.feature.authentication.presentation.viewModel.RegisterViewModel
+import com.realio.app.feature.authentication.presentation.viewModel.VerificationViewModel
 
 @Composable
 fun RealioAppNavigation() {
@@ -49,21 +51,28 @@ fun RealioAppNavigation() {
         }
         // Register screen route
         composable(route = RealioScreenConsts.SignUp.name) {
-            SignUpScreen(navController = navController)
+            val registerViewModel = hiltViewModel<RegisterViewModel>()
+            SignUpScreen(
+                navController = navController,
+                registerViewModel = registerViewModel
+            )
         }
         // Otp screen route
         composable(
             route = "${RealioScreenConsts.Otp.name}/{emailQuery}",
+
             arguments = listOf(
                 navArgument(name = "emailQuery") {
                     type = NavType.StringType
                 }
             )
         ) { navBack ->
+            val verificationViewModel = hiltViewModel<VerificationViewModel>()
             navBack.arguments?.getString("emailQuery")?.let { email ->
                 OtpVerificationScreen(
                     navController = navController,
-                    email = email
+                    email = email,
+                    verificationViewModel = verificationViewModel
                 )
             }
         }

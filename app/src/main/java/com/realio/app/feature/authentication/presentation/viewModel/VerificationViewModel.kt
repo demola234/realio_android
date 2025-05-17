@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.realio.app.core.exception.ApiException
 import com.realio.app.core.exception.ValidationException
+import com.realio.app.feature.authentication.data.model.response.OtpResponse
 import com.realio.app.feature.authentication.domain.entity.User
 import com.realio.app.feature.authentication.domain.usecases.ResendOtpUseCase
 import com.realio.app.feature.authentication.domain.usecases.VerifyOtpUseCase
@@ -31,8 +32,9 @@ class VerificationViewModel @Inject constructor(
             _verificationState.value = VerificationState.Loading
 
             verifyOtpUseCase(email, otp)
-                .onSuccess { user ->
-                    _verificationState.value = VerificationState.Success(user)
+                .onSuccess { valid ->
+
+                    _verificationState.value = VerificationState.Success(valid)
                 }
                 .onFailure { error ->
                     val errorMessage = when (error) {
@@ -76,7 +78,7 @@ class VerificationViewModel @Inject constructor(
 sealed class VerificationState {
     object Idle : VerificationState()
     object Loading : VerificationState()
-    data class Success(val user: User) : VerificationState()
+    data class Success(val valid: OtpResponse) : VerificationState()
     data class Error(val message: String) : VerificationState()
 }
 

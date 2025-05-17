@@ -27,18 +27,18 @@ interface AuthApi {
     @POST("v1/auth/register")
     suspend fun register(@Body registerRequest: RegisterRequest): Response<AuthApiResponse>
 
-    @POST("api/v1/resend-otp")
+    @POST("v1/auth/resend-otp")
     suspend fun resendOtp(@Body resendOtpRequest: ResendOtpRequest): Response<OtpResponse>
 
-    @POST("api/v1/verify")
-    suspend fun verifyOtp(@Body verifyRequest: VerifyRequest): Response<AuthApiResponse>
+    @POST("v1/auth/verify")
+    suspend fun verifyOtp(@Body verifyRequest: VerifyRequest): Response<OtpResponse>
 
-    @POST("api/v1/oauth/login")
+    @POST("v1/auth/oauth/login")
     suspend fun oauthLogin(@Body oauthLoginRequest: OAuthLoginRequest): Response<AuthApiResponse>
 
-    @POST("api/v1/oauth/register")
+    @POST("v1/auth/register")
     suspend fun oauthRegister(@Body oauthRegisterRequest: OAuthRegisterRequest): Response<AuthApiResponse>
 
-    @GET("api/v1/user/{userId}")
+    @GET("v1/auth/user/{userId}")
     suspend fun getUserDetails(@Path("userId") userId: String): Response<UserResponse>
 }
