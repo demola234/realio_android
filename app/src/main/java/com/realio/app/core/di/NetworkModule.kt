@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.preferencesDataStoreFile
+import com.realio.app.core.network.ApiLoggingInterceptor
 import com.realio.app.feature.authentication.data.api.AuthApi
 import com.realio.app.feature.authentication.data.datasource.local.TokenStorage
 import com.realio.app.feature.authentication.data.datasource.local.TokenStorageImpl
@@ -29,7 +30,6 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
-import java.util.prefs.Preferences
 import javax.inject.Singleton
 
 @Module
@@ -42,6 +42,7 @@ object NetworkModule {
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
+            .addInterceptor(ApiLoggingInterceptor())
             .addInterceptor(HttpLoggingInterceptor().apply {
                     HttpLoggingInterceptor.Level.NONE
             })
@@ -52,7 +53,7 @@ object NetworkModule {
     @Singleton
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("localhost:8080/")
+            .baseUrl("http://10.0.2.2:8080/")
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -88,7 +89,7 @@ object StorageModule {
 
     @Provides
     @Singleton
-    fun provideTokenStorage(dataStore: DataStore<Preferences>): TokenStorage {
+    fun provideTokenStorage(dataStore: DataStore<androidx.datastore.preferences.core.Preferences>): TokenStorage {
         return TokenStorageImpl(dataStore)
     }
 }

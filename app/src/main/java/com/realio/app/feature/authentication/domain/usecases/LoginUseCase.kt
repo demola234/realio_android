@@ -2,6 +2,7 @@ package com.realio.app.feature.authentication.domain.usecases
 
 import android.util.Patterns
 import com.realio.app.core.exception.ValidationException
+import com.realio.app.core.utils.isValidEmail
 import com.realio.app.feature.authentication.domain.repository.AuthRepository
 import com.realio.app.feature.authentication.domain.entity.User
 
@@ -22,6 +23,3 @@ class LoginUseCase(private val authRepository: AuthRepository) {
     }
 }
 
-fun String.isValidEmail(): Boolean {
-    return Patterns.EMAIL_ADDRESS.matcher(this).matches()
-}

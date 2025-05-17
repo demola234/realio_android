@@ -1,5 +1,7 @@
 package com.realio.app.feature.authentication.data.datasource.remote
 
+import AuthApiResponse
+import android.util.Log
 import com.realio.app.core.exception.ApiException
 import com.realio.app.feature.authentication.data.api.AuthApi
 import com.realio.app.feature.authentication.data.model.request.LoginRequest
@@ -7,19 +9,20 @@ import com.realio.app.feature.authentication.data.model.request.OAuthLoginReques
 import com.realio.app.feature.authentication.data.model.request.RegisterRequest
 import com.realio.app.feature.authentication.data.model.request.ResendOtpRequest
 import com.realio.app.feature.authentication.data.model.request.VerifyRequest
-import com.realio.app.feature.authentication.data.model.response.AuthResponse
 import com.realio.app.feature.authentication.data.model.response.LogoutResponse
 import com.realio.app.feature.authentication.data.model.response.OtpResponse
 import com.realio.app.feature.authentication.data.model.response.UserResponse
+import timber.log.Timber
 
 class AuthDataSourceImpl(private val authApi: AuthApi) : AuthDataSource {
-    override suspend fun login(email: String, password: String): Result<AuthResponse> {
+    override suspend fun login(email: String, password: String): Result<AuthApiResponse> {
         return try {
             val response = authApi.login(LoginRequest(email, password))
             if (response.isSuccessful) {
+                Timber.tag("AuthDataSourceImpl").d("$response.body()")
                 Result.success(response.body()!!)
             } else {
-                val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                val errorBody = response.message() ?: "Unknown error"
                 Result.failure(ApiException(response.code(), errorBody))
             }
         } catch (e: Exception) {
@@ -27,7 +30,7 @@ class AuthDataSourceImpl(private val authApi: AuthApi) : AuthDataSource {
         }
     }
 
-    override suspend fun register(name: String, email: String, password: String): Result<AuthResponse> {
+    override suspend fun register(name: String, email: String, password: String): Result<AuthApiResponse> {
         return try {
             val response = authApi.register(RegisterRequest(name, email, password))
             if (response.isSuccessful) {
@@ -59,7 +62,7 @@ class AuthDataSourceImpl(private val authApi: AuthApi) : AuthDataSource {
     override suspend fun verifyOtp(
         email: String,
         otp: String
-    ): Result<AuthResponse> {
+    ): Result<AuthApiResponse> {
         return try {
             val response = authApi.verifyOtp(VerifyRequest(email = email, otp = otp))
             if (response.isSuccessful) {
@@ -90,7 +93,7 @@ class AuthDataSourceImpl(private val authApi: AuthApi) : AuthDataSource {
     override suspend fun oauthLogin(
         provider: String,
         token: String
-    ): Result<AuthResponse> {
+    ): Result<AuthApiResponse> {
         return try {
             val response = authApi.oauthLogin(OAuthLoginRequest(provider = provider, token = token))
             if (response.isSuccessful) {
@@ -108,7 +111,7 @@ class AuthDataSourceImpl(private val authApi: AuthApi) : AuthDataSource {
         provider: String,
         token: String,
         email: String
-    ): Result<AuthResponse> {
+    ): Result<AuthApiResponse> {
         return try {
             val response = authApi.oauthLogin(OAuthLoginRequest(provider = provider, token = token))
             if (response.isSuccessful) {

@@ -124,7 +124,12 @@ dependencies {
 
     // Optional: For ViewModel support
     implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
+
     // DataStore
     implementation ("androidx.datastore:datastore-preferences:1.0.0")
     implementation ("androidx.datastore:datastore-preferences-core:1.0.0")
+
+    // API Interceptor
+    implementation ("com.jakewharton.timber:timber:5.0.1")
+
 }

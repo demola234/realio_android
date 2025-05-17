@@ -49,7 +49,7 @@ fun RealioTheme(
         }
 
         darkTheme -> DarkColorScheme
-        else -> DarkColorScheme
+        else -> LightColorScheme
     }
 
     MaterialTheme(

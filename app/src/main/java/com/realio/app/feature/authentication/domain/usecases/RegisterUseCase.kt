@@ -1,6 +1,7 @@
 package com.realio.app.feature.authentication.domain.usecases
 
 import com.realio.app.core.exception.ValidationException
+import com.realio.app.core.utils.isValidEmail
 import com.realio.app.feature.authentication.domain.entity.User
 import com.realio.app.feature.authentication.domain.repository.AuthRepository
 import kotlin.Result.Companion.failure

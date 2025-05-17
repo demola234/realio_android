@@ -2,6 +2,7 @@ package com.realio.app.feature.authentication.presentation.screen
 
 import ThemedImage
 import android.app.Activity
+import android.app.AlertDialog
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -49,6 +50,7 @@ import com.realio.app.core.common.Dimensions.PADDING_LARGE
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -56,13 +58,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.realio.app.core.navigation.RealioScreenConsts
 import com.realio.app.core.ui.components.buttons.AppButton
 import com.realio.app.core.ui.components.textfields.AppTextField
 import com.realio.app.core.ui.theme.PrimaryColorLight
 import com.realio.app.core.ui.theme.RealioTheme
+import com.realio.app.feature.authentication.presentation.components.LoadingPage
 import com.realio.app.feature.authentication.presentation.viewModel.AuthState
 import com.realio.app.feature.authentication.presentation.viewModel.IGoogleViewModel
+import com.realio.app.feature.authentication.presentation.viewModel.LoginState
+import com.realio.app.feature.authentication.presentation.viewModel.LoginViewModel
 import com.realio.app.feature.authentication.presentation.viewModel.PreviewGoogleViewModel
 import com.realio.app.feature.authentication.presentation.viewModel.UserData
 
@@ -71,24 +77,72 @@ fun LoginScreen(
     navController: NavController? = null,
     webClientId: String? = null,
     onSignInSuccess: (UserData) -> Unit?,
-    authViewModel: IGoogleViewModel
+    authViewModel: IGoogleViewModel,
+    loginViewModel: LoginViewModel = hiltViewModel()
     ) {
     val emailField = rememberSaveable { mutableStateOf("") }
     val passwordField = rememberSaveable { mutableStateOf("") }
-    val valid = remember(emailField.value, passwordField.value) {
-        emailField.value.trim().isNotEmpty() && passwordField.value.trim().isNotEmpty()
-    }
-    val showPassword = rememberSaveable { mutableStateOf(false) }
-    val keyboardController = LocalSoftwareKeyboardController.current
+    var errorDialog by remember { mutableStateOf(false) }
+    var loggedInDialog by remember { mutableStateOf(false) }
 
+    val isLoading = remember { mutableStateOf(false) }
+    val showLoading = rememberSaveable { mutableStateOf(false) }
+    val keyboardController = LocalSoftwareKeyboardController.current
     val scrollState = rememberScrollState()
 
     val context = LocalContext.current
     val authState by authViewModel.authState.collectAsState()
+    val loginState by loginViewModel.loginState.collectAsState()
+
+    val dialogVisibilityState = remember {
+        MutableTransitionState(false)
+    }
 
     // Initialize Google Sign-In when the composable is first created
     LaunchedEffect(Unit) {
         authViewModel.initGoogleSignIn(context, webClientId.toString())
+    }
+
+    LaunchedEffect(loginState) {
+        when (loginState) {
+            is LoginState.Loading -> {
+                // Set dialogVisibilityState to true to show loading page
+                dialogVisibilityState.targetState = true
+            }
+            is LoginState.Success -> {
+                // Keep dialog visible to show success message
+                dialogVisibilityState.targetState = false
+                loggedInDialog = true
+            }
+            is LoginState.Error -> {
+                // Hide loading dialog on error and show error dialog instead
+                dialogVisibilityState.targetState = false
+                errorDialog = true
+            }
+            is LoginState.Idle -> {
+                // Hide loading dialog in idle state
+                dialogVisibilityState.targetState = false
+            }
+        }
+    }
+
+    LaunchedEffect(loginState) {
+        when (loginState) {
+            is LoginState.Idle -> {
+                isLoading.value = false
+            }
+            is LoginState.Loading -> {
+                isLoading.value = true
+            }
+            is LoginState.Success -> {
+                // Keep loading visible but change text
+                isLoading.value = true
+            }
+            is LoginState.Error -> {
+                isLoading.value = false
+                errorDialog = true
+            }
+        }
     }
 
     // Set up the activity result launcher for Google Sign-In
@@ -163,6 +217,52 @@ fun LoginScreen(
             )
         },
     ) { paddingValues ->
+        Box  {
+            when (val currentState = loginState) {
+                is LoginState.Idle -> Box {}
+                is LoginState.Loading -> {
+                    LoadingPage(
+                        onClose = {
+                            // Set both states to handle closing
+                            showLoading.value = false
+                            dialogVisibilityState.targetState = false
+                        },
+                        dialogVisibilityState = dialogVisibilityState
+                    )
+                }
+                is LoginState.Success -> {
+                    val userData = currentState.user
+
+                if (loggedInDialog) {
+                    AlertDialog(
+                        onDismissRequest = { loggedInDialog = false },
+                        title = { Text("Login Success!!!!") },
+                        text = { Text("$userData") },
+                        confirmButton = {
+                            TextButton(onClick = { loggedInDialog = false }) {
+                                Text("OK")
+                            }
+                        }
+                    )
+                }
+                }
+                is LoginState.Error -> {
+                    // Error dialog handling remains the same
+                    if (errorDialog) {
+                        AlertDialog(
+                            onDismissRequest = { errorDialog = false },
+                            title = { Text("Login Error") },
+                            text = { Text(currentState.message) },
+                            confirmButton = {
+                                TextButton(onClick = { errorDialog = false }) {
+                                    Text("OK")
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+
         Column(
             modifier = Modifier
                 .padding(paddingValues)
@@ -220,6 +320,7 @@ fun LoginScreen(
                 value = passwordField,
                 placeHolder = "Password",
                 imeAction = ImeAction.Done,
+                showStrengthIndicator = false,
                 onValueChange = {},
                 modifier = Modifier.fillMaxWidth()
             )
@@ -241,6 +342,8 @@ fun LoginScreen(
             // Login button
             AppButton (
                 onClick = {
+                    isLoading.value = true
+                    loginViewModel.login(email = emailField.value, password = passwordField.value)
                     keyboardController?.hide()
 
                 },
@@ -397,6 +500,7 @@ fun LoginScreen(
             }
         }
     }
+        }
 }
 
 @Composable

@@ -1,5 +1,6 @@
 package com.realio.app.core.utils
 
+import android.util.Patterns
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -107,4 +108,9 @@ enum class PasswordStrength {
             STRONG -> "Strong"
         }
     }
+}
+
+
+fun String.isValidEmail(): Boolean {
+    return Patterns.EMAIL_ADDRESS.matcher(this).matches()
 }

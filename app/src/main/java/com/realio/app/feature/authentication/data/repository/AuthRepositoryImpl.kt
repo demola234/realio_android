@@ -5,6 +5,8 @@ import com.realio.app.feature.authentication.data.datasource.remote.AuthDataSour
 import com.realio.app.feature.authentication.data.model.response.toUser
 import com.realio.app.feature.authentication.domain.entity.User
 import com.realio.app.feature.authentication.domain.repository.AuthRepository
+import toAuthResponse
+import toUser
 
 class AuthRepositoryImpl(
     private val authDataSource: AuthDataSource,
@@ -14,9 +16,17 @@ class AuthRepositoryImpl(
     override suspend fun login(email: String, password: String): Result<User> {
         return authDataSource.login(email, password).fold(
             onSuccess = { response ->
-                // Save tokens
-                tokenStorage.saveTokens(response.token, response.refreshToken)
-                Result.success(response.toUser())
+                if (response?.user == null || response.session == null) {
+                    return Result.failure(Exception("Invalid response from server"))
+                }
+
+                // Safe token access
+                val token = response.session.token ?: ""
+                tokenStorage.saveTokens(token, token)
+
+                // Convert to User domain model with null checks
+                val authResponse = response.toAuthResponse()
+                Result.success(authResponse.toUser())
             },
             onFailure = { error ->
                 Result.failure(error)
@@ -27,8 +37,8 @@ class AuthRepositoryImpl(
     override suspend fun register(name: String, email: String, password: String): Result<User> {
         return authDataSource.register(name, email, password).fold(
             onSuccess = { response ->
-                // Don't save tokens yet as user needs to verify first
-                Result.success(response.toUser())
+                val authResponse = response.toAuthResponse()
+                Result.success(authResponse.toUser())
             },
             onFailure = { error ->
                 Result.failure(error)
@@ -63,8 +73,17 @@ class AuthRepositoryImpl(
         return authDataSource.verifyOtp(email, otp).fold(
             onSuccess = { response ->
                 // After verification, save tokens
-                tokenStorage.saveTokens(response.token, response.refreshToken)
-                Result.success(response.toUser())
+                if (response?.user == null || response.session == null) {
+                    return Result.failure(Exception("Invalid response from server"))
+                }
+
+                // Safe token access
+                val token = response.session.token ?: ""
+                tokenStorage.saveTokens(token, token)
+
+                // Convert to User domain model with null checks
+                val authResponse = response.toAuthResponse()
+                Result.success(authResponse.toUser())
             },
             onFailure = { error ->
                 Result.failure(error)
@@ -82,8 +101,17 @@ class AuthRepositoryImpl(
     override suspend fun oauthLogin(provider: String, token: String): Result<User> {
         return authDataSource.oauthLogin(provider, token).fold(
             onSuccess = { response ->
-                tokenStorage.saveTokens(response.token, response.refreshToken)
-                Result.success(response.toUser())
+                if (response?.user == null || response.session == null) {
+                    return Result.failure(Exception("Invalid response from server"))
+                }
+
+                // Safe token access
+                val token = response.session.token ?: ""
+                tokenStorage.saveTokens(token, token)
+
+                // Convert to User domain model with null checks
+                val authResponse = response.toAuthResponse()
+                Result.success(authResponse.toUser())
             },
             onFailure = { error ->
                 Result.failure(error)
@@ -94,8 +122,17 @@ class AuthRepositoryImpl(
     override suspend fun oauthRegister(provider: String, token: String, email: String): Result<User> {
         return authDataSource.oauthRegister(provider, token, email).fold(
             onSuccess = { response ->
-                tokenStorage.saveTokens(response.token, response.refreshToken)
-                Result.success(response.toUser())
+                if (response?.user == null || response.session == null) {
+                    return Result.failure(Exception("Invalid response from server"))
+                }
+
+                // Safe token access
+                val token = response.session.token ?: ""
+                tokenStorage.saveTokens(token, token)
+
+                // Convert to User domain model with null checks
+                val authResponse = response.toAuthResponse()
+                Result.success(authResponse.toUser())
             },
             onFailure = { error ->
                 Result.failure(error)

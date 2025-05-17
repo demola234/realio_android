@@ -1,6 +1,7 @@
 package com.realio.app.core.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -15,6 +16,7 @@ import com.realio.app.feature.authentication.presentation.screen.OtpVerification
 import com.realio.app.feature.authentication.presentation.screen.PersonalizationExperienceScreen
 import com.realio.app.feature.authentication.presentation.screen.SignUpScreen
 import com.realio.app.feature.authentication.presentation.viewModel.GoogleViewModel
+import com.realio.app.feature.authentication.presentation.viewModel.LoginViewModel
 
 @Composable
 fun RealioAppNavigation() {
@@ -30,9 +32,11 @@ fun RealioAppNavigation() {
         }
         // Login screen route
         composable(route = RealioScreenConsts.Login.name) {
+            val loginViewModel = hiltViewModel<LoginViewModel>()
             LoginScreen(
                 navController = navController,
                 authViewModel = authViewModel,
+                loginViewModel = loginViewModel,
                 onSignInSuccess = { userData ->
                     // Navigate to the home screen after successful sign-in
                     navController.navigate(RealioScreenConsts.PersonalInfo.name) {
