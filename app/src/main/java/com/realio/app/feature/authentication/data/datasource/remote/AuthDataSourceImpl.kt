@@ -11,8 +11,14 @@ import com.realio.app.feature.authentication.data.model.request.ResendOtpRequest
 import com.realio.app.feature.authentication.data.model.request.VerifyRequest
 import com.realio.app.feature.authentication.data.model.response.LogoutResponse
 import com.realio.app.feature.authentication.data.model.response.OtpResponse
+import com.realio.app.feature.authentication.data.model.response.UploadImageResponse
 import com.realio.app.feature.authentication.data.model.response.UserResponse
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import timber.log.Timber
+import java.io.File
 
 class AuthDataSourceImpl(private val authApi: AuthApi) : AuthDataSource {
     override suspend fun login(email: String, password: String): Result<AuthApiResponse> {
@@ -138,6 +144,48 @@ class AuthDataSourceImpl(private val authApi: AuthApi) : AuthDataSource {
                 Result.failure(ApiException(response.code(), errorBody))
             }
         } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    override suspend fun uploadImage(
+        userId: String,
+        token: String,
+        imageFile: File
+    ): Result<UploadImageResponse> {
+        return try {
+            // Log the incoming parameters
+            Log.d("AuthDataSourceImpl", "uploadImage called with userId: $userId")
+            Log.d("AuthDataSourceImpl", "File exists: ${imageFile.exists()}, File size: ${imageFile.length()} bytes")
+            Log.d("AuthDataSourceImpl", "Original token (first 10 chars): ${token.take(10)}...")
+
+            // Create the multipart request bodies
+            val userIdRequestBody = userId.toRequestBody("text/plain".toMediaTypeOrNull())
+            val imageRequestBody = imageFile.asRequestBody("image/*".toMediaTypeOrNull())
+            val imagePart = MultipartBody.Part.createFormData("content", imageFile.name, imageRequestBody)
+
+            // Format the token correctly with "Bearer " prefix
+            val formattedToken = if (token.startsWith("Bearer ")) token else "Bearer $token"
+
+            Log.d("AuthDataSourceImpl", "Formatted Token (first 15 chars): ${formattedToken.take(15)}...")
+            Log.d("AuthDataSourceImpl", "Making API call to upload image...")
+
+            // Call the API with the properly formatted request
+            val response = authApi.uploadImage(formattedToken, userIdRequestBody, imagePart)
+
+            Log.d("AuthDataSourceImpl", "API Response Code: ${response.code()}")
+
+            if (response.isSuccessful) {
+                Timber.tag("AuthDataSourceImpl")
+                    .d("Upload successful! Response: ${response.body()}")
+                Result.success(response.body()!!)
+            } else {
+                val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                Timber.tag("AuthDataSourceImpl")
+                    .e("Upload failed! Error code: ${response.code()}, Error body: $errorBody")
+                Result.failure(ApiException(response.code(), errorBody))
+            }
+        } catch (e: Exception) {
+            Timber.tag("AuthDataSourceImpl").e(e, "Exception during upload")
             Result.failure(e)
         }
     }

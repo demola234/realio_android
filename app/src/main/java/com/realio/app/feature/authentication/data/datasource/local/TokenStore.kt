@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.map
 interface TokenStorage {
     suspend fun saveTokens(authToken: String, refreshToken: String)
     suspend fun getAuthToken(): String?
+    suspend fun saveUserId(userId: String)
+    suspend fun getUserId(): String?
     suspend fun getRefreshToken(): String?
     suspend fun clearTokens()
 }
@@ -18,6 +20,7 @@ class TokenStorageImpl(private val dataStore: DataStore<Preferences>) : TokenSto
     companion object {
         private val AUTH_TOKEN = stringPreferencesKey("auth_token")
         private val REFRESH_TOKEN = stringPreferencesKey("refresh_token")
+        private val USER_ID = stringPreferencesKey("user_id")
     }
 
     override suspend fun saveTokens(authToken: String, refreshToken: String) {
@@ -33,6 +36,18 @@ class TokenStorageImpl(private val dataStore: DataStore<Preferences>) : TokenSto
         }.firstOrNull()
     }
 
+    override suspend fun saveUserId(userId: String) {
+        dataStore.edit { preferences ->
+           preferences[USER_ID] = userId
+       }
+    }
+
+    override suspend fun getUserId(): String? {
+        return dataStore.data.map { preferences ->
+            preferences[USER_ID]
+        }.firstOrNull()
+    }
+
     override suspend fun getRefreshToken(): String? {
         return dataStore.data.map { preferences ->
             preferences[REFRESH_TOKEN]
@@ -43,6 +58,7 @@ class TokenStorageImpl(private val dataStore: DataStore<Preferences>) : TokenSto
         dataStore.edit { preferences ->
             preferences.remove(AUTH_TOKEN)
             preferences.remove(REFRESH_TOKEN)
+            preferences.remove(USER_ID)
         }
     }
 }

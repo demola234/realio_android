@@ -43,11 +43,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,36 +67,33 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.realio.app.R
 import com.realio.app.core.ui.components.buttons.AppButton
 import com.realio.app.core.ui.theme.RealioTheme
+import com.realio.app.feature.authentication.presentation.components.LoadingPage
+import com.realio.app.feature.authentication.presentation.viewModel.UploadImageState
+import com.realio.app.feature.authentication.presentation.viewModel.UploadProfileImageViewModel
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-
 @Composable
-fun AvatarSelectionScreen(navController: NavController? = null) {
-    // State for the selected image
+fun AvatarSelectionScreen(
+    navController: NavController? = null,
+    uploadProfileImageViewModel: UploadProfileImageViewModel = hiltViewModel()
+) {
+    // State variables
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-
-    // Dialog state
     var showImageSourceDialog by remember { mutableStateOf(false) }
+    var errorDialog by remember { mutableStateOf(false) }
 
-    var showSavingDialog by remember { mutableStateOf(false) }
-
-    // Add this for animation control
-    val dialogVisibilityState = remember {
-        MutableTransitionState(false)
-    }
-
-    // Connect the visibility state to the dialog state
-    LaunchedEffect(showSavingDialog) {
-        dialogVisibilityState.targetState = showSavingDialog
-    }
+    // Dialog visibility states
+    val dialogVisibilityState = remember { MutableTransitionState(false) }
+    val uploadProfileState by uploadProfileImageViewModel.uploadProfileState.collectAsState()
 
     // Context for permissions and file operations
     val context = LocalContext.current
@@ -106,6 +106,27 @@ fun AvatarSelectionScreen(navController: NavController? = null) {
             "${context.packageName}.fileprovider",
             tempImageFile
         )
+    }
+
+    // Handle state changes for upload process
+    LaunchedEffect(uploadProfileState) {
+        when (uploadProfileState) {
+            is UploadImageState.Loading -> {
+                dialogVisibilityState.targetState = true
+            }
+            is UploadImageState.Success -> {
+                dialogVisibilityState.targetState = false
+                // Navigate or show success message
+                navController?.popBackStack()
+            }
+            is UploadImageState.Error -> {
+                dialogVisibilityState.targetState = false
+                errorDialog = true
+            }
+            is UploadImageState.Idle -> {
+                dialogVisibilityState.targetState = false
+            }
+        }
     }
 
     // Permission state
@@ -189,7 +210,7 @@ fun AvatarSelectionScreen(navController: NavController? = null) {
                 },
                 shape = MaterialTheme.shapes.medium,
                 onClick = {
-                    showSavingDialog = true
+                    uploadProfileImageViewModel.uploadProfileImage(image = tempImageFile)
                 }
             )
         }
@@ -207,7 +228,6 @@ fun AvatarSelectionScreen(navController: NavController? = null) {
                     .fillMaxWidth()
                     .padding(top = 8.dp, bottom = 24.dp)
             ) {
-
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
                     contentDescription = "Back",
@@ -234,7 +254,6 @@ fun AvatarSelectionScreen(navController: NavController? = null) {
                 fontSize = 16.sp,
                 modifier = Modifier.padding(bottom = 36.dp)
             )
-
 
             // Avatar placeholder
             Column(
@@ -273,118 +292,71 @@ fun AvatarSelectionScreen(navController: NavController? = null) {
                     text = "Add a picture",
                     color = Color.Gray,
                     fontSize = 14.sp,
-                    modifier = Modifier
-                        .padding(top = 12.dp)
-
+                    modifier = Modifier.padding(top = 12.dp)
                 )
             }
-
-
-            // Save button
-
         }
     }
 
-    // Create a pulsating animation for the loading icon
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 0.9f,
-        targetValue = 1.1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "scale"
-    )
-
-    AnimatedVisibility(
-        visibleState = dialogVisibilityState,
-        enter = fadeIn(animationSpec = tween(300)) +
-                slideInVertically(
-                    initialOffsetY = { -50 },
-                    animationSpec = tween(300)
-                ),
-        exit = fadeOut(animationSpec = tween(300)) +
-                slideOutVertically(
-                    targetOffsetY = { -50 },
-                    animationSpec = tween(300)
+    // Overlay dialogs and loading screens
+    Box(modifier = Modifier.fillMaxSize()) {
+        when (val currentState = uploadProfileState) {
+            is UploadImageState.Loading -> {
+                LoadingPage(
+                    onClose = {
+                        dialogVisibilityState.targetState = false
+                    },
+                    dialogVisibilityState = dialogVisibilityState
                 )
-    ) {
-        Box(
-            modifier = Modifier
-                .alpha(0.8f)
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .clickable(enabled = true) {
-                    showSavingDialog = false
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(16.dp)
-            ) {
-                // Custom loading indicator
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .scale(scale)
+            }
+            is UploadImageState.Error -> {
+                if (errorDialog) {
+                    AlertDialog(
+                        onDismissRequest = { errorDialog = false },
+                        title = { Text("Upload Error") },
+                        text = { Text(currentState.message) },
+                        confirmButton = {
+                            TextButton(onClick = { errorDialog = false }) {
+                                Text("OK")
+                            }
+                        }
+                    )
+                }
+            }
+            else -> { /* No action needed for other states */ }
+        }
+
+        // Image source dialog
+        if (showImageSourceDialog) {
+            AlertDialog(
+                onDismissRequest = { showImageSourceDialog = false },
+                title = { Text("Select Image Source") },
+                text = { Text("Choose where to select your avatar from") },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            launchCamera()
+                            showImageSourceDialog = false
+                        }
                     ) {
-                        ThemedImage(
-                            darkImage = R.drawable.loading_image_dark,
-                            lightImage = R.drawable.loading_image_light,
-                            modifier = Modifier
-                                .height(37.dp)
-                                .width(65.dp)
-                        )
+                        Text("Camera")
                     }
-                }
-
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "Saving your preferences...",
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontSize = 16.sp
-                )
-            }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = {
+                            launchGallery()
+                            showImageSourceDialog = false
+                        }
+                    ) {
+                        Text("Gallery")
+                    }
+                },
+                containerColor = Color(0xFF2C2C2C),
+                textContentColor = Color.White,
+                titleContentColor = Color.White
+            )
         }
-    }
-    // Image source dialog
-    if (showImageSourceDialog) {
-        AlertDialog(
-            onDismissRequest = { showImageSourceDialog = false },
-            title = { Text("Select Image Source") },
-            text = { Text("Choose where to select your avatar from") },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        launchCamera()
-                        showImageSourceDialog = false
-                    }
-                ) {
-                    Text("Camera")
-                }
-            },
-            dismissButton = {
-                Button(
-                    onClick = {
-                        launchGallery()
-                        showImageSourceDialog = false
-                    }
-                ) {
-                    Text("Gallery")
-                }
-            },
-            containerColor = Color(0xFF2C2C2C),
-            textContentColor = Color.White,
-            titleContentColor = Color.White
-        )
     }
 }
 
@@ -399,8 +371,6 @@ private fun createImageFile(context: Context): File {
         storageDir
     )
 }
-
-
 
 @Preview(showBackground = true)
 @Composable

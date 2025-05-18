@@ -9,12 +9,17 @@ import com.realio.app.feature.authentication.data.model.request.ResendOtpRequest
 import com.realio.app.feature.authentication.data.model.request.VerifyRequest
 import com.realio.app.feature.authentication.data.model.response.LogoutResponse
 import com.realio.app.feature.authentication.data.model.response.OtpResponse
+import com.realio.app.feature.authentication.data.model.response.UploadImageResponse
 import com.realio.app.feature.authentication.data.model.response.UserResponse
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Path
 
 interface AuthApi {
@@ -41,4 +46,12 @@ interface AuthApi {
 
     @GET("v1/auth/user/{userId}")
     suspend fun getUserDetails(@Path("userId") userId: String): Response<UserResponse>
+
+    @Multipart
+    @POST("v1/auth/upload-image")
+    suspend fun uploadImage(
+        @Header("Authorization") token: String,
+        @Part("userId") userId: RequestBody,
+        @Part content: MultipartBody.Part
+    ): Response<UploadImageResponse>
 }

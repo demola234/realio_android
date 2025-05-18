@@ -18,6 +18,7 @@ import com.realio.app.feature.authentication.presentation.screen.SignUpScreen
 import com.realio.app.feature.authentication.presentation.viewModel.GoogleViewModel
 import com.realio.app.feature.authentication.presentation.viewModel.LoginViewModel
 import com.realio.app.feature.authentication.presentation.viewModel.RegisterViewModel
+import com.realio.app.feature.authentication.presentation.viewModel.UploadProfileImageViewModel
 import com.realio.app.feature.authentication.presentation.viewModel.VerificationViewModel
 
 @Composable
@@ -83,7 +84,9 @@ fun RealioAppNavigation() {
         }
         // Avatar screen route
         composable(route = RealioScreenConsts.Avatar.name) {
-            AvatarSelectionScreen(navController = navController)
+            val uploadProfileImageViewModel = hiltViewModel<UploadProfileImageViewModel>()
+
+            AvatarSelectionScreen(navController = navController, uploadProfileImageViewModel = uploadProfileImageViewModel)
         }
     }
 }

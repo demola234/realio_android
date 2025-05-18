@@ -18,6 +18,7 @@ import com.realio.app.feature.authentication.domain.usecases.LogoutUseCase
 import com.realio.app.feature.authentication.domain.usecases.OAuthLoginUseCase
 import com.realio.app.feature.authentication.domain.usecases.RegisterUseCase
 import com.realio.app.feature.authentication.domain.usecases.ResendOtpUseCase
+import com.realio.app.feature.authentication.domain.usecases.UploadProfileImageUseCase
 import com.realio.app.feature.authentication.domain.usecases.VerifyOtpUseCase
 import dagger.Module
 import dagger.Provides
@@ -143,5 +144,10 @@ object UseCaseModule {
     @Provides
     fun provideGetUserDetailsUseCase(authRepository: AuthRepository): GetUserDetailsUseCase {
         return GetUserDetailsUseCase(authRepository)
+    }
+
+    @Provides
+    fun provideUploadImageUseCase(authRepository: AuthRepository): UploadProfileImageUseCase {
+        return UploadProfileImageUseCase(authRepository)
     }
 }
