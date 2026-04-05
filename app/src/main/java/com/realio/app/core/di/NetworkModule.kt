@@ -45,7 +45,7 @@ object NetworkModule {
             .writeTimeout(30, TimeUnit.SECONDS)
             .addInterceptor(ApiLoggingInterceptor())
             .addInterceptor(HttpLoggingInterceptor().apply {
-                    HttpLoggingInterceptor.Level.NONE
+                level = HttpLoggingInterceptor.Level.BODY
             })
             .build()
     }
@@ -54,7 +54,7 @@ object NetworkModule {
     @Singleton
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8080/")
+            .baseUrl("http://localhost:8084/")
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

@@ -2,8 +2,10 @@ package com.realio.app.feature.authentication.presentation.screen
 
 import ThemedImage
 import android.app.Activity
-import android.app.AlertDialog
-import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -22,43 +24,40 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.realio.app.R
 import com.realio.app.core.common.Dimensions.PADDING_LARGE
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.IntentSenderRequest
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.core.MutableTransitionState
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.realio.app.core.navigation.RealioScreenConsts
 import com.realio.app.core.ui.components.buttons.AppButton
 import com.realio.app.core.ui.components.textfields.AppTextField
@@ -76,431 +75,251 @@ import com.realio.app.feature.authentication.presentation.viewModel.UserData
 fun LoginScreen(
     navController: NavController? = null,
     webClientId: String? = null,
-    onSignInSuccess: (UserData) -> Unit?,
+    onSignInSuccess: (UserData) -> Unit,
     authViewModel: IGoogleViewModel,
     loginViewModel: LoginViewModel = hiltViewModel()
-    ) {
-    val emailField = rememberSaveable { mutableStateOf("") }
-    val passwordField = rememberSaveable { mutableStateOf("") }
-    var errorDialog by remember { mutableStateOf(false) }
-    var loggedInDialog by remember { mutableStateOf(false) }
+) {
+    val email = rememberSaveable { mutableStateOf("") }
+    val password = rememberSaveable { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    val isLoading = remember { mutableStateOf(false) }
-    val showLoading = rememberSaveable { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
-    val scrollState = rememberScrollState()
-
     val context = LocalContext.current
+
     val authState by authViewModel.authState.collectAsState()
     val loginState by loginViewModel.loginState.collectAsState()
 
-    val dialogVisibilityState = remember {
-        MutableTransitionState(false)
-    }
+    val isLoginLoading = loginState is LoginState.Loading
+    val isGoogleLoading =
+        authState is AuthState.Loading || authState is AuthState.RedirectingToBrowser
+    val loadingVisibility = remember { MutableTransitionState(false) }
 
-    // Initialize Google Sign-In when the composable is first created
     LaunchedEffect(Unit) {
-        authViewModel.initGoogleSignIn(context, webClientId.toString())
+        authViewModel.initGoogleSignIn(context, webClientId.orEmpty())
     }
 
     LaunchedEffect(loginState) {
-        when (loginState) {
-            is LoginState.Loading -> {
-                // Set dialogVisibilityState to true to show loading page
-                dialogVisibilityState.targetState = true
+        loadingVisibility.targetState = isLoginLoading
+        when (val state = loginState) {
+            is LoginState.Loading -> keyboardController?.hide()
+            is LoginState.Error -> errorMessage = state.message
+            is LoginState.Success -> { /* TODO: navigate to home screen */
             }
-            is LoginState.Success -> {
-                // Keep dialog visible to show success message
-                dialogVisibilityState.targetState = false
-                loggedInDialog = true
-            }
-            is LoginState.Error -> {
-                // Hide loading dialog on error and show error dialog instead
-                dialogVisibilityState.targetState = false
-                errorDialog = true
-            }
-            is LoginState.Idle -> {
-                // Hide loading dialog in idle state
-                dialogVisibilityState.targetState = false
-            }
+
+            is LoginState.Idle -> {}
         }
     }
 
-    LaunchedEffect(loginState) {
-        when (loginState) {
-            is LoginState.Idle -> {
-                isLoading.value = false
-            }
-            is LoginState.Loading -> {
-                isLoading.value = true
-            }
-            is LoginState.Success -> {
-                // Keep loading visible but change text
-                isLoading.value = true
-            }
-            is LoginState.Error -> {
-                isLoading.value = false
-                errorDialog = true
-            }
-        }
-    }
-
-    // Set up the activity result launcher for Google Sign-In
     val signInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
-        result.data?.extras?.keySet()?.forEach { key ->
-            val value = result.data?.extras?.get(key)
-            Log.d("GoogleSignIn", "Extra: $key = $value")
-        }
-        Log.d("Google Result", "Result Code: ${result}")
         when (result.resultCode) {
-
-            Activity.RESULT_OK -> {
-                // Success path
-                authViewModel.handleSignInResult(result.data)
-            }
-            Activity.RESULT_CANCELED -> {
-                // Extract error information if available
-                val statusCode = result.data?.extras?.getInt("googleSignInStatus", 0) ?: 0
-                val errorMessage = if (statusCode != 0) {
-                    "Sign-in failed with status code: $statusCode"
-                } else {
-                    "Sign-in was canceled"
-                }
-
-                Log.d("GoogleSignIn", "Sign-in canceled. Status code: $statusCode")
-
-                // Update the auth state to show the error
-                authViewModel.updateAuthState(AuthState.Error(errorMessage))
-            }
-            else -> {
-                Log.d("GoogleSignIn", "Unexpected result code: ${result.resultCode}")
-                authViewModel.updateAuthState(AuthState.Error("Unexpected error during sign-in"))
-            }
+            Activity.RESULT_OK -> authViewModel.handleSignInResult(result.data)
+            else -> authViewModel.updateAuthState(AuthState.Error("Sign-in failed or was canceled"))
         }
     }
 
-    // Observe authentication state changes
-// In your LaunchedEffect for authState
     LaunchedEffect(authState) {
-        when (authState) {
+        when (val state = authState) {
             is AuthState.OneTapSignInReady -> {
-                // Launch Sign-In UI
-                val request = IntentSenderRequest.Builder(
-                    (authState as AuthState.OneTapSignInReady).intentSender
-                ).build()
-                signInLauncher.launch(request)
+                signInLauncher.launch(IntentSenderRequest.Builder(state.intentSender).build())
             }
-            is AuthState.RedirectingToBrowser -> {
-                // Launch browser for OAuth
-                val intent = (authState as AuthState.RedirectingToBrowser).intent
-                context.startActivity(intent)
-            }
-            is AuthState.Authenticated -> {
-                // Handle successful sign-in
-                val userData = (authState as AuthState.Authenticated).userData
-                onSignInSuccess(userData)
-            }
+
+            is AuthState.RedirectingToBrowser -> context.startActivity(state.intent)
+            is AuthState.Authenticated -> onSignInSuccess(state.userData)
+            is AuthState.Error -> errorMessage = state.message
             else -> {}
         }
     }
 
-    Scaffold(
-        // remove top bar
-        topBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(0.dp)
-                    .background(MaterialTheme.colorScheme.primary)
-            )
-        },
-    ) { paddingValues ->
-        Box  {
-            when (val currentState = loginState) {
-                is LoginState.Idle -> Box {}
-                is LoginState.Loading -> {
-                    LoadingPage(
-                        onClose = {
-                            // Set both states to handle closing
-                            showLoading.value = false
-                            dialogVisibilityState.targetState = false
-                        },
-                        dialogVisibilityState = dialogVisibilityState
-                    )
-                }
-                is LoginState.Success -> {
-                    val userData = currentState.user
+    if (errorMessage != null) {
+        AlertDialog(
+            onDismissRequest = { errorMessage = null },
+            title = { Text(R.string.error.toString()) },
+            text = { Text(errorMessage!!) },
+            confirmButton = {
+                TextButton(onClick = { errorMessage = null }) { Text("OK") }
+            })
+    }
 
-                if (loggedInDialog) {
-                    AlertDialog(
-                        onDismissRequest = { loggedInDialog = false },
-                        title = { Text("Login Success!!!!") },
-                        text = { Text("$userData") },
-                        confirmButton = {
-                            TextButton(onClick = { loggedInDialog = false }) {
-                                Text("OK")
-                            }
-                        }
-                    )
-                }
-                }
-                is LoginState.Error -> {
-                    // Error dialog handling remains the same
-                    if (errorDialog) {
-                        AlertDialog(
-                            onDismissRequest = { errorDialog = false },
-                            title = { Text("Login Error") },
-                            text = { Text(currentState.message) },
-                            confirmButton = {
-                                TextButton(onClick = { errorDialog = false }) {
-                                    Text("OK")
-                                }
-                            }
-                        )
-                    }
-                }
-            }
-
-        Column(
-            modifier = Modifier
-                .padding(paddingValues)
-                .verticalScroll(scrollState)
-                .padding(horizontal = PADDING_LARGE)
-                .fillMaxSize(),
-        ) {
-
-            Spacer(modifier = Modifier.height(24.dp))
-            // Logo
-            ThemedImage(
-                darkImage = R.drawable.dark_logo,
-                lightImage = R.drawable.light_logo,
-                modifier = Modifier
-                    .height(48.dp)
-                    .width(100.dp)
-            )
-
-            // App illustration/image
-            Image(
-                painter = painterResource(id = R.drawable.onboarding1),
-                contentDescription = null,
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .padding(24.dp)
-                    .height(220.dp)
-                    .fillMaxWidth()
-            )
-
-            // Welcome text
-            Text(
-                text = "Welcome to Realio!",
-                style = MaterialTheme.typography.displaySmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontSize = 24.sp
-                ),
-                modifier = Modifier.padding(vertical = 15.dp)
-            )
-
-            // Email field
-            AppTextField(
-                placeHolder = "Email Address",
-                keyboardType = KeyboardType.Email,
-                imeAction = ImeAction.Next,
-                value = emailField,
-                onValueChange = {},
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Password field with visibility toggle
-            PasswordTextField(
-                value = passwordField,
-                placeHolder = "Password",
-                imeAction = ImeAction.Done,
-                showStrengthIndicator = false,
-                onValueChange = {},
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            // Forgot password
-            Box(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "Forgot password?",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
-                        fontWeight = FontWeight.Bold
-                    ),
-                    modifier = Modifier
-                        .padding(vertical = 16.dp)
-                        .align(Alignment.CenterStart)
+    Scaffold { paddingValues ->
+        Box {
+            if (isLoginLoading) {
+                LoadingPage(
+                    onClose = { loadingVisibility.targetState = false },
+                    dialogVisibilityState = loadingVisibility
                 )
             }
 
-            // Login button
-            AppButton (
-                onClick = {
-                    isLoading.value = true
-                    loginViewModel.login(email = emailField.value, password = passwordField.value)
-                    keyboardController?.hide()
-
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                ),
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
+                    .padding(paddingValues)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = PADDING_LARGE)
+                    .fillMaxSize()
             ) {
-                Text(
-                    text = "Login",
-                    style = MaterialTheme.typography.titleMedium
-                )
-            }
+                LoginHeader()
 
-            // Sign up option
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 24.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = "Not a member? ",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "Register now",
-                    modifier = Modifier.clickable(){
-                        navController?.navigate(RealioScreenConsts.SignUp.name)
+                LoginForm(
+                    email = email,
+                    password = password,
+                    isLoading = isLoginLoading,
+                    onLoginClick = {
+                        loginViewModel.login(email = email.value, password = password.value)
                     },
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    onRegisterClick = {
+                        navController?.navigate(RealioScreenConsts.SignUp.name)
+                    })
 
-                )
-            }
-
-            // Divider
-            HorizontalDivider(
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)
-            )
-
-            // Continue with text
-            Text(
-                text = "Or continue with",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(vertical = 24.dp, horizontal = 30.dp)
-                    .align(alignment = Alignment.CenterHorizontally)
-
-            )
-
-            // Social login options
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-
-            ) {
-                // Google
-                // In your when (authState) block in the SocialLoginButton section:
-
-                when (authState) {
-                    is AuthState.Idle -> {
-                        SocialLoginButton(
-                            color = MaterialTheme.colorScheme.error,
-                            iconResId = R.drawable.google_white,
-                            contentDescription = "Continue with Google",
-                            onClick = {
-                                authViewModel.beginSignIn(context)
-                            })
-                    }
-
-                    is AuthState.Loading -> {
-                        CircularProgressIndicator()
-                    }
-
-                    is AuthState.Error -> {
-                        val errorMessage = (authState as AuthState.Error).message
-                        Text(
-                            text = errorMessage,
-                            color = MaterialTheme.colorScheme.error,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        SocialLoginButton (
-                            color = MaterialTheme.colorScheme.error,
-                            iconResId = R.drawable.google_white,
-                            contentDescription = "Try again with Google",
-                            onClick = {
-                                authViewModel.beginSignIn(context)
-                            })
-                    }
-
-                    is AuthState.Authenticated -> {
-                        // This UI will be shown briefly before navigation occurs
-                        Text("Sign in successful!")
-                    }
-
-                    is AuthState.SignedOut -> {
-                        Text("You have been signed out.")
-                        Spacer(modifier = Modifier.height(16.dp))
-                        SocialLoginButton(
-                            color = MaterialTheme.colorScheme.error,
-                            iconResId = R.drawable.google_white,
-                            contentDescription = "Continue with Google",
-                            onClick = {
-                                authViewModel.beginSignIn(context)
-                            })
-                    }
-
-                    // Replace TODO() with actual implementations for these states
-                    is AuthState.OneTapSignInReady -> {
-                        // This state is handled by the LaunchedEffect, no UI needed
-                        // (The UI will automatically show the Google sign-in dialog)
-                        SocialLoginButton(
-                            color = MaterialTheme.colorScheme.error,
-                            iconResId = R.drawable.google_white,
-                            contentDescription = "Continue with Google",
-                            onClick = {
-                                authViewModel.beginSignIn(context)
-                            })
-                    }
-
-                    is AuthState.RedirectingToBrowser -> {
-                        // This state is handled by the LaunchedEffect, show loading or message
-                        CircularProgressIndicator()
-                        Text(
-                            text = "Redirecting to browser...",
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                    }
-                }
-                // Apple
-                SocialLoginButton(
-                    color = MaterialTheme.colorScheme.onSurface,
-                    iconResId = R.drawable.apple_white,
-                    contentDescription = "Continue with Apple",
-                    onClick = {}
-                )
-
-                // Facebook
-                SocialLoginButton(
-                    color = PrimaryColorLight,
-                    iconResId = R.drawable.facebook,
-                    contentDescription = "Continue with Facebook",
-                    onClick = {}
-                )
+                SocialLoginSection(
+                    isGoogleLoading = isGoogleLoading,
+                    onGoogleClick = { authViewModel.beginSignIn(context) })
             }
         }
     }
+}
+
+@Composable
+private fun LoginHeader() {
+    Spacer(modifier = Modifier.height(24.dp))
+
+    ThemedImage(
+        darkImage = R.drawable.dark_logo,
+        lightImage = R.drawable.light_logo,
+        modifier = Modifier
+            .height(48.dp)
+            .width(100.dp)
+    )
+
+    Image(
+        painter = painterResource(id = R.drawable.onboarding1),
+        contentDescription = null,
+        contentScale = ContentScale.Fit,
+        modifier = Modifier
+            .padding(24.dp)
+            .height(220.dp)
+            .fillMaxWidth()
+    )
+
+    Text(
+        text = R.string.welcome_to_realio.toString(),
+        style = MaterialTheme.typography.displaySmall.copy(
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 24.sp
+        ),
+        modifier = Modifier.padding(vertical = 15.dp)
+    )
+}
+
+@Composable
+private fun LoginForm(
+    email: MutableState<String>,
+    password: MutableState<String>,
+    isLoading: Boolean,
+    onLoginClick: () -> Unit,
+    onRegisterClick: () -> Unit,
+) {
+    AppTextField(
+        placeHolder = R.string.email_address.toString(),
+        keyboardType = KeyboardType.Email,
+        imeAction = ImeAction.Next,
+        value = email,
+        modifier = Modifier.fillMaxWidth()
+    )
+
+    Spacer(modifier = Modifier.height(10.dp))
+
+    PasswordTextField(
+        value = password,
+        placeHolder = R.string.password.toString(),
+        imeAction = ImeAction.Done,
+        showStrengthIndicator = false,
+        modifier = Modifier.fillMaxWidth()
+    )
+
+    Text(
+        text = R.string.forgot_password.toString(),
+        style = MaterialTheme.typography.bodyMedium.copy(
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+            fontWeight = FontWeight.Bold
+        ),
+        modifier = Modifier
+            .padding(vertical = 16.dp)
+            .clickable { /* TODO: navigate to forgot password screen */ })
+
+    AppButton(
+        onClick = onLoginClick,
+        enabled = !isLoading,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+    ) {
+        Text(text = R.string.login.toString(), style = MaterialTheme.typography.titleMedium)
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 24.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Text(text = R.string.not_a_member.toString(), style = MaterialTheme.typography.bodyMedium)
+        Text(
+            text = R.string.register_now.toString(),
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = MaterialTheme.colorScheme.primary
+            ),
+            modifier = Modifier.clickable { onRegisterClick() })
+    }
+}
+
+@Composable
+private fun SocialLoginSection(
+    isGoogleLoading: Boolean,
+    onGoogleClick: () -> Unit,
+) {
+    HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f))
+
+    Text(
+        text = R.string.or_continue_with.toString(),
+        style = MaterialTheme.typography.bodyMedium,
+        modifier = Modifier
+            .padding(vertical = 24.dp)
+            .fillMaxWidth(),
+        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+    )
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        if (isGoogleLoading) {
+            CircularProgressIndicator(modifier = Modifier.size(48.dp))
+        } else {
+            SocialLoginButton(
+                color = MaterialTheme.colorScheme.error,
+                iconResId = R.drawable.google_white,
+                contentDescription = R.string.continue_with_google.toString(),
+                onClick = onGoogleClick
+            )
         }
+
+        SocialLoginButton(
+            color = MaterialTheme.colorScheme.onSurface,
+            iconResId = R.drawable.apple_white,
+            contentDescription = R.string.continue_with_apple.toString(),
+            onClick = {})
+
+        SocialLoginButton(
+            color = PrimaryColorLight,
+            iconResId = R.drawable.facebook,
+            contentDescription = R.string.continue_with_facebook.toString(),
+            onClick = {})
+    }
 }
 
 @Composable
@@ -512,21 +331,16 @@ private fun SocialLoginButton(
 ) {
     Box(
         modifier = Modifier
-            .size(40.dp)
-            .clickable { onClick() }
+            .size(48.dp)
             .clip(CircleShape)
             .background(color)
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f),
-                shape = CircleShape
-            ),
-        contentAlignment = Alignment.Center
+            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f), CircleShape)
+            .clickable { onClick() }, contentAlignment = Alignment.Center
     ) {
         Image(
             painter = painterResource(id = iconResId),
             contentDescription = contentDescription,
-            modifier = Modifier.size(12.dp)
+            modifier = Modifier.size(22.dp)
         )
     }
 }
@@ -534,13 +348,12 @@ private fun SocialLoginButton(
 @Preview(showBackground = true)
 @Composable
 fun LoginScreenPreview() {
-    val fakeViewModel = PreviewGoogleViewModel()
     RealioTheme {
         LoginScreen(
             navController = null,
             webClientId = "dummy-web-client-id",
             onSignInSuccess = {},
-            authViewModel = fakeViewModel
+            authViewModel = PreviewGoogleViewModel()
         )
     }
 }

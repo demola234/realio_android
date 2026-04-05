@@ -65,8 +65,6 @@ import com.realio.app.core.ui.components.textfields.AppTextField
 import com.realio.app.core.ui.theme.RealioTheme
 import com.realio.app.core.utils.ValidationUtils
 import com.realio.app.feature.authentication.presentation.components.LoadingPage
-import com.realio.app.feature.authentication.presentation.viewModel.LoginState
-import com.realio.app.feature.authentication.presentation.viewModel.LoginViewModel
 import com.realio.app.feature.authentication.presentation.viewModel.RegisterState
 import com.realio.app.feature.authentication.presentation.viewModel.RegisterViewModel
 

@@ -21,23 +21,40 @@ class UploadProfileImageViewModel @Inject constructor(
     private val _uploadProfileState = MutableStateFlow<UploadImageState>(UploadImageState.Idle)
     val uploadProfileState: StateFlow<UploadImageState> = _uploadProfileState.asStateFlow()
 
-     fun uploadProfileImage(image: File) {
-        viewModelScope.launch {
-            _uploadProfileState.value = UploadImageState.Loading
-            uploadProfileImageUseCase(image)
-                .onSuccess { uploadResponse ->
-                    _uploadProfileState.value = UploadImageState.Success(uploadResponse)
-                }
-                .onFailure { error ->
-                    val errorMessage = when (error) {
-                        is ValidationException -> error.message
-                        is ApiException -> "Server error: ${error.message}"
-                        else -> "An unexpected error occurred: ${error.message}"
+    // Store the selected image file
+    private var selectedImageFile: File? = null
+
+    /**
+     * Sets the selected image file for upload
+     * @param file The file to be uploaded
+     */
+    fun setSelectedImageFile(file: File) {
+        selectedImageFile = file
+    }
+
+    fun uploadProfileImage() {
+        selectedImageFile?.let { image ->
+            viewModelScope.launch {
+                _uploadProfileState.value = UploadImageState.Loading
+                uploadProfileImageUseCase(image)
+                    .onSuccess { uploadResponse ->
+                        _uploadProfileState.value = UploadImageState.Success(uploadResponse)
                     }
-                    _uploadProfileState.value = UploadImageState.Error(
-                        message = errorMessage ?: "An unexpected error occurred"
-                    )
-                }
+                    .onFailure { error ->
+                        val errorMessage = when (error) {
+                            is ValidationException -> error.message
+                            is ApiException -> "Server error: ${error.message}"
+                            else -> "An unexpected error occurred: ${error.message}"
+                        }
+                        _uploadProfileState.value = UploadImageState.Error(
+                            message = errorMessage ?: "An unexpected error occurred"
+                        )
+                    }
+            }
+        } ?: run {
+            _uploadProfileState.value = UploadImageState.Error(
+                message = "No image selected. Please select an image first."
+            )
         }
     }
 
