@@ -57,13 +57,14 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.realio.app.R
-import com.realio.app.core.common.Dimensions.PADDING_LARGE
-import com.realio.app.core.common.Dimensions.PADDING_SMALL
+import com.realio.app.core.utils.Dimensions.PADDING_LARGE
+import com.realio.app.core.utils.Dimensions.PADDING_SMALL
 import com.realio.app.core.navigation.RealioScreenConsts
 import com.realio.app.core.ui.components.buttons.AppButton
 import com.realio.app.core.ui.components.textfields.AppTextField
 import com.realio.app.core.ui.theme.RealioTheme
-import com.realio.app.core.utils.ValidationUtils
+import com.realio.app.core.utils.validation.PasswordStrength
+import com.realio.app.core.utils.validation.ValidationUtils
 import com.realio.app.feature.authentication.presentation.components.LoadingPage
 import com.realio.app.feature.authentication.presentation.viewModel.RegisterState
 import com.realio.app.feature.authentication.presentation.viewModel.RegisterViewModel
@@ -113,7 +114,7 @@ fun SignUpScreen(
         derivedStateOf {
             if (passwordField.value.isEmpty()) {
                 ""
-            } else if (ValidationUtils.getPasswordStrength(passwordField.value) == com.realio.app.core.utils.PasswordStrength.WEAK) {
+            } else if (ValidationUtils.getPasswordStrength(passwordField.value) == PasswordStrength.WEAK) {
                 ValidationUtils.getPasswordRequirementsMessage()
             } else {
                 ""
@@ -138,7 +139,7 @@ fun SignUpScreen(
         derivedStateOf {
             nameField.value.isNotEmpty() &&
                     ValidationUtils.isValidEmail(emailField.value) &&
-                    ValidationUtils.getPasswordStrength(passwordField.value) != com.realio.app.core.utils.PasswordStrength.WEAK &&
+                    ValidationUtils.getPasswordStrength(passwordField.value) != PasswordStrength.WEAK &&
                     ValidationUtils.doPasswordsMatch(passwordField.value, confirmPasswordField.value) &&
                     rememberMe.value
         }

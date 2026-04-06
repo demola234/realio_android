@@ -57,7 +57,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.realio.app.R
-import com.realio.app.core.common.Dimensions.PADDING_LARGE
+import com.realio.app.core.utils.Dimensions.PADDING_LARGE
 import com.realio.app.core.navigation.RealioScreenConsts
 import com.realio.app.core.ui.components.buttons.AppButton
 import com.realio.app.core.ui.components.textfields.AppTextField

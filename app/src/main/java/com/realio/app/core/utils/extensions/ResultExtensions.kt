@@ -1,11 +1,23 @@
 package com.realio.app.core.utils.extensions
 
-import android.util.Patterns
+import java.util.regex.Pattern
 
 object Validators {
-    fun validateEmail(email: String): Boolean {
-        val pattern = Patterns.EMAIL_ADDRESS
-        return pattern.matcher(email).matches()
+    private val EMAIL_PATTERN = Pattern.compile(
+        "[a-zA-Z0-9+._%\\-]{1,256}" +
+        "@" +
+        "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,64}" +
+        "(" +
+        "\\." +
+        "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}" +
+        ")+"
+    )
+
+    fun validateEmails(email: String): Boolean {
+        if (email.isEmpty()) {
+            return false
+        }
+        return EMAIL_PATTERN.matcher(email).matches()
     }
 
     fun validatePassword(password: String): Boolean {

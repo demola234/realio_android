@@ -1,4 +1,4 @@
-package com.realio.app.core.common
+package com.realio.app.core.ui.components.loading
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*

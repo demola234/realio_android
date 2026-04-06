@@ -1,12 +1,12 @@
-package com.realio.app.core.utils
+package com.realio.app.core.utils.validation
 
-import android.util.Patterns
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import com.realio.app.core.ui.theme.AccentTertiaryColorDark
 import com.realio.app.core.ui.theme.GreenOneColorLight
 import java.util.regex.Pattern
+import kotlin.text.iterator
 
 /**
  * Utility class to handle form validation for authentication screens.
@@ -20,7 +20,7 @@ object ValidationUtils {
      */
     fun isValidEmail(email: String): Boolean {
         val emailPattern = Pattern.compile(
-            "[a-zA-Z0-9+._%-+]{1,256}" +
+            "[a-z   A-Z0-9+._%-+]{1,256}" +
                     "@" +
                     "[a-zA-Z0-9][a-zA-Z0-9-]{0,64}" +
                     "(" +
@@ -112,5 +112,5 @@ enum class PasswordStrength {
 
 
 fun String.isValidEmail(): Boolean {
-    return Patterns.EMAIL_ADDRESS.matcher(this).matches()
+    return ValidationUtils.isValidEmail(this)
 }
